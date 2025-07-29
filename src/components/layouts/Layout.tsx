@@ -18,9 +18,9 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
     return (
         <>
             {loginModalOpen && <LoginModal closeLoginModal={closeLoginModal}/>}
-            <div className="flex flex-col h-screen">
+            <div className="grid grid-rows-[auto_1fr_auto] min-h-screen">
                 <Header showLoginModal={showLoginModal}/>
-                <main className="flex-1 w-full items-center content-center justify-center">
+                <main className="w-full">
                     {children}
                 </main>
                 <Footer/>
