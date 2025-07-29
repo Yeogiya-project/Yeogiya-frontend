@@ -8,7 +8,7 @@ interface LoginModalProps {
 const LoginModal: React.FC<LoginModalProps> = ({closeLoginModal}) => {
     return (
         <>
-            <div className="fixed inset-0 bg-transparent flex items-center justify-center z-50"
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
                  onClick={closeLoginModal}>
                 <div className="bg-white w-115 rounded-2xl border border-gray-300 shadow-xl p-8" onClick={(e) => e.stopPropagation()}>
                     <div

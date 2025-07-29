@@ -1,6 +1,6 @@
 import {Route, Routes} from "react-router-dom";
 import React from "react";
-import Home from "../../pages/Home.tsx";
+import Home from "../../pages/Home";
 
 const Router: React.FC = () => {
     return (

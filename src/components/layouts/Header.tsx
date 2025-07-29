@@ -1,8 +1,9 @@
-import React, {useState} from "react";
+import React, { useState, useCallback } from "react";
 import SentimentSatisfiedAltSharpIcon from '@mui/icons-material/SentimentSatisfiedAltSharp';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import { NAV_ITEMS } from '../../constants/navigation';
 
 interface HeaderProps {
     showLoginModal: () => void;
@@ -11,7 +12,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({showLoginModal}) => {
     return (
         <div className="relative flex w-full border-b border-gray-200 shadow-sm">
-            <header className="sticky top-0 z-50 w-full">
+            <header className="sticky top-0 z-40 w-full">
                 <div className=" mx-auto px-8">
                     <div className="flex h-16 items-center justify-between">
                         <div className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
@@ -50,21 +51,21 @@ export const DeskTopNav: React.FC<HeaderProps> = ({showLoginModal}) => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-    const navItems = [
-        {name: "홈", path: "/"},
-        {name: "보드게임", path: "/"},
-        {name: "방탈출", path: "/"},
-        {name: "이벤트", path: "/"}
-    ];
-
-    const handleLogin = () => {
-        setIsLoggedIn(!isLoggedIn);
+    const handleLogin = useCallback(() => {
         showLoginModal();
-    }
+    }, [showLoginModal]);
+
+    const toggleProfile = useCallback(() => {
+        setIsProfileOpen(prev => !prev);
+    }, []);
+
+    const closeProfile = useCallback(() => {
+        setIsProfileOpen(false);
+    }, []);
     return (
         <>
             <nav className="hidden items-center gap-8 md:flex">
-                {navItems.map((item, index) => (
+                {NAV_ITEMS.map((item, index) => (
                     <a key={index}
                        className="text-lg font-medium text-gray-600 transition-all hover:text-gray-900 hover:scale-105 relative group"
                        href={item.path}>
@@ -91,16 +92,16 @@ export const DeskTopNav: React.FC<HeaderProps> = ({showLoginModal}) => {
                             </button>
                             <div className="relative">
                                 <button
-                                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                    onClick={toggleProfile}
                                     className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-r from-[#1993e5] to-[#1976d2] text-white transition-all hover:shadow-lg hover:scale-105 active:scale-95">
                                     <SentimentSatisfiedAltSharpIcon fontSize="medium"/>
                                 </button>
                                 {isProfileOpen && (
                                     <>
                                         <div className="fixed inset-0 z-10"
-                                             onClick={() => setIsProfileOpen(false)}></div>
+                                             onClick={closeProfile}></div>
                                         <div
-                                            className="absolute right-0 mt-3 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-20 animate-in slide-in-from-top-2">
+                                            className="absolute right-0 mt-3 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-in slide-in-from-top-2">
                                             <a className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                                                href="#">
                                                 <span className="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
@@ -132,30 +133,26 @@ export const MobileNav: React.FC<HeaderProps> = ({showLoginModal}) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-    const navItems = [
-        {name: "홈", path: "/"},
-        {name: "보드게임", path: "/"},
-        {name: "방탈출", path: "/"},
-        {name: "이벤트", path: "/"}
-    ];
-
-    const handleLogin = () => {
-        setIsLoggedIn(!isLoggedIn);
+    const handleLogin = useCallback(() => {
         showLoginModal();
-    }
+    }, [showLoginModal]);
+
+    const toggleMenu = useCallback(() => {
+        setIsMenuOpen(prev => !prev);
+    }, []);
     return (
         <>
             <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                onClick={toggleMenu}
                 className="md:hidden flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
             >
                 {isMenuOpen ? <CloseIcon/> : <MenuIcon/>}
             </button>
             {isMenuOpen && (
                 <div
-                    className="md:hidden absolute top-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
+                    className="md:hidden absolute top-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
                     <nav className="px-4 py-6 space-y-4">
-                        {navItems.map((item, index) => (
+                        {NAV_ITEMS.map((item, index) => (
                             <a key={index}
                                className="block text-lg font-medium text-gray-600 hover:text-gray-900 py-2 transition-colors"
                                href={item.path}>{item.name}</a>
