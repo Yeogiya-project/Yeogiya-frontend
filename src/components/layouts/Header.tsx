@@ -56,6 +56,11 @@ export const DeskTopNav: React.FC<HeaderProps> = ({showLoginModal}) => {
         {name: "방탈출", path: "/"},
         {name: "이벤트", path: "/"}
     ];
+
+    const handleLogin = () => {
+        setIsLoggedIn(!isLoggedIn);
+        showLoginModal();
+    }
     return (
         <>
             <nav className="hidden items-center gap-8 md:flex">
@@ -74,7 +79,7 @@ export const DeskTopNav: React.FC<HeaderProps> = ({showLoginModal}) => {
                     <>
                         <div className="flex items-center">
                             <a className="text-sm font-medium text-white bg-gradient-to-r from-[#1993e5] to-[#1976d2] px-6 py-2.5 rounded-full hover:shadow-lg hover:scale-105 transition-all cursor-pointer"
-                               onClick={() => setIsLoggedIn(!isLoggedIn)}>로그인</a>
+                               onClick={handleLogin}>로그인</a>
                         </div>
                     </>
                 ) : (
@@ -133,6 +138,11 @@ export const MobileNav: React.FC<HeaderProps> = ({showLoginModal}) => {
         {name: "방탈출", path: "/"},
         {name: "이벤트", path: "/"}
     ];
+
+    const handleLogin = () => {
+        setIsLoggedIn(!isLoggedIn);
+        showLoginModal();
+    }
     return (
         <>
             <button
@@ -155,7 +165,7 @@ export const MobileNav: React.FC<HeaderProps> = ({showLoginModal}) => {
                                 <hr className="my-4 border-gray-200"/>
                                 <div className="space-y-3">
                                     <a className="block text-center text-sm font-medium text-white bg-gradient-to-r from-[#1993e5] to-[#1976d2] px-6 py-3 rounded-full cursor-pointer"
-                                       onClick={() => setIsLoggedIn(!isLoggedIn)}>로그인</a>
+                                       onClick={handleLogin}>로그인</a>
                                     <a className="block text-center text-sm font-medium text-gray-600 hover:text-gray-900 py-2 transition-colors"
                                        href="#">회원가입</a>
                                 </div>

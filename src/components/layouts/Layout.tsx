@@ -1,6 +1,7 @@
 import React, {type ReactNode, useState} from "react";
 import Header from "./Header.tsx";
 import Footer from "./Footer.tsx";
+import LoginModal from "../modals/LoginModal.tsx";
 
 interface LayoutProps {
     children: ReactNode;
@@ -16,7 +17,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
     }
     return (
         <>
-            {loginModalOpen && <div/>}
+            {loginModalOpen && <LoginModal closeLoginModal={closeLoginModal}/>}
             <div className="flex flex-col h-screen">
                 <Header showLoginModal={showLoginModal}/>
                 <main className="flex-1 w-full items-center content-center justify-center">
