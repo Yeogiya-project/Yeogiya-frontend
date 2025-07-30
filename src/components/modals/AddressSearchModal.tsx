@@ -1,26 +1,14 @@
 import React from "react";
 import {useAddressSearch} from "../../hooks/useAddressSearch";
 import {useGeolocation} from "../../hooks/useGeolocation";
-
-// 타입 정의
-interface AddressResult {
-    title: string;
-    category?: string;
-    address: string;
-    roadAddress?: string;
-    mapX: string;
-    mapY: string;
-}
+import type {AddressResult} from "../../types/home";
 
 interface AddressSearchModalProps {
     closeModal: () => void;
     onSelectAddress: (address: string) => void;
-    addressIndex: number;
 }
 
-// AddressResult 인터페이스는 utils/addressApi.ts로 이동
-
-const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSelectAddress, addressIndex}) => {
+const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSelectAddress}) => {
     const {
         searchKeyword,
         searchResults,
@@ -31,9 +19,7 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
         handleKeyUp
     } = useAddressSearch();
 
-    const {gettingLocation, getCurrentLocationAddress} = useGeolocation();
-
-    // 검색 및 위치 관련 로직은 커스텀 Hook으로 이동
+    const {loading: gettingLocation, getCurrentLocationAddress} = useGeolocation();
 
     const handleSelectAddress = (address: AddressResult) => {
         const fullAddress = address.roadAddress || address.address;
@@ -68,7 +54,6 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
                             <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                                 주소 검색
                             </h2>
-                            <p className="text-base text-gray-600">친구 {addressIndex + 1}의 위치를 찾아보세요</p>
                         </div>
                     </div>
                     <button
@@ -80,29 +65,31 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
                 </div>
 
                 {/* 검색 입력 */}
-                <div className="px-6 border-b border-gray-100">
-                    <div className="relative">
+                <div className="px-6 py-4 border-b border-gray-100">
+                    <div className="space-y-3">
                         <input
                             type="text"
                             value={searchKeyword}
                             onChange={(e) => handleKeywordChange(e.target.value)}
                             onKeyUp={handleKeyUp}
                             placeholder="어디서 만날까요? (예: 강남역, 홍대입구역)"
-                            className="w-full p-4 pr-24 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-purple-400 focus:bg-white transition-all duration-200 text-gray-800 placeholder-gray-500 text-lg"
+                            className="w-full p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-purple-400 focus:bg-white transition-all duration-200 text-gray-800 placeholder-gray-500 text-lg"
                         />
                         <button
-                            onClick={() => handleSearch}
+                            onClick={handleSearch}
                             disabled={loading}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+                            className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                         >
                             {loading ? (
                                 <>
-                                    <div
-                                        className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
-                                    검색중
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
+                                    검색중...
                                 </>
                             ) : (
-                                '🔍 검색'
+                                <>
+                                    <span className="text-xl mr-2">🔍</span>
+                                    주소 검색하기
+                                </>
                             )}
                         </button>
                     </div>
@@ -208,7 +195,7 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
                             </div>
                         </>
                     ) : searchKeyword && !loading ? (
-                        <div className="text-center py-12">
+                        <div className="text-center py-3">
                             <div
                                 className="w-20 h-20 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <span className="text-3xl">😔</span>

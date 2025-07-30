@@ -42,7 +42,7 @@ api.interceptors.response.use(
 // CRUD 함수들
 export const apiClient = {
     // GET 요청
-    get: async (url: string, params?: any) => {
+    get: async <T = any>(url: string, params?: any): Promise<T> => {
         try {
             const response = await api.get(url, {params});
             return response.data;

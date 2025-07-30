@@ -1,7 +1,7 @@
 interface Window {
     naver: {
         maps: {
-            Map: new (element: string | HTMLElement, options: any) => any;
+            Map: new (element: string | HTMLElement) => any;
             LatLng: new (lat: number, lng: number) => any;
             MapTypeControlStyle: {
                 BUTTON: any;
