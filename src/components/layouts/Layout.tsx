@@ -1,5 +1,5 @@
 import React, {type ReactNode, useState} from "react";
-import Header from "./Header";
+import Header from "./header/Header.tsx";
 import Footer from "./Footer";
 import LoginModal from "../modals/LoginModal";
 
