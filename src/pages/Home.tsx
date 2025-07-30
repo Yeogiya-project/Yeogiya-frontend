@@ -72,7 +72,7 @@ const Home: React.FC = () => {
             )}
             
             {/* 플로팅 액션 버튼들 */}
-            <div className="fixed top-20 right-4 z-40 flex flex-col gap-3">
+            <div className="fixed top-1/2 right-4 z-40 flex flex-col gap-3 transform -translate-y-1/2">
                 {/* 다시 검색하기 버튼 (Welcome 모달 열기) */}
                 <button
                     onClick={handlers.handleNewSearch}
