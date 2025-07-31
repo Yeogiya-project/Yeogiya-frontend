@@ -153,10 +153,10 @@ export const geocode = (address: string): Promise<NaverGeocodeResponse> => {
 };
 
 // 네이버 Local Search API를 사용한 장소 검색 (POI, 지명 등)
-export const searchPlaces = (query: string): Promise<NaverSearchResult> => {
+export const searchPlaces = (query: string, options?: { location?: naver.maps.LatLng, radius?: number, sort?: string }): Promise<NaverSearchResult> => {
     return new Promise((resolve, reject) => {
-        if (!window.naver?.maps?.Service) {
-            reject(new Error('네이버 지도 API가 로드되지 않았습니다.'));
+        if (!window.naver?.maps?.Service || !window.naver.maps.Service.SearchType || !window.naver.maps.Service.SearchType.PLACE) {
+            reject(new Error('네이버 지도 API 또는 SearchType.PLACE가 로드되지 않았습니다.'));
             return;
         }
 
@@ -176,9 +176,26 @@ export const searchPlaces = (query: string): Promise<NaverSearchResult> => {
 
         naver.maps.Service.search({
             query: query,
-            type: naver.maps.Service.SearchType.PLACE
+            type: naver.maps.Service.SearchType.PLACE,
+            ...options
         }, callback);
     });
+};
+
+// 주변 지하철역 검색 함수
+export const searchNearbySubwayStations = async (location: naver.maps.LatLng): Promise<NaverSearchResult | null> => {
+    try {
+        const response = await searchPlaces('지하철역', {
+            location: location,
+            radius: 5000, // 5km 반경으로 확대
+            sort: 'distance'
+        });
+        return response;
+    } catch (error) {
+        // 디버깅을 위해 오류를 콘솔에 출력
+        console.error("지하철역 검색 중 오류 발생:", error);
+        return null;
+    }
 };
 
 // 중간지점 계산 함수
@@ -317,7 +334,7 @@ export const createMarker = (
     map: naver.maps.Map, 
     position: naver.maps.LatLng, 
     name: string,
-    type: 'friend' | 'center' = 'friend',
+    type: 'friend' | 'center' | 'station' = 'friend',
     friendIndex?: number
 ): naver.maps.Marker => {
     let emoji: string;
@@ -326,10 +343,13 @@ export const createMarker = (
     if (type === 'center') {
         emoji = '🎯';
         color = '#ff4757'; // 빨간색
+    } else if (type === 'station') {
+        emoji = '🚇';
+        color = '#2ed573'; // 초록색
     } else {
         // 친구별로 다른 이모티콘과 색상
         const friendEmojis = ['🙋‍♂️', '🙋‍♀️', '🤗', '😊', '🎉'];
-        const friendColors = ['#3742fa', '#2ed573', '#ff6348', '#ffa502', '#a55eea'];
+        const friendColors = ['#3742fa', '#ff6348', '#ffa502', '#a55eea', '#1e90ff'];
         
         emoji = friendEmojis[friendIndex! % friendEmojis.length];
         color = friendColors[friendIndex! % friendColors.length];

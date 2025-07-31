@@ -1,6 +1,6 @@
 import {useState, useCallback, useMemo} from "react";
 import type {Friend} from "../types/home";
-import { calculateCenterPoint, createMarker, fitMapToMarkers, clearMarkers } from '../utils/naverMapUtils';
+import { calculateCenterPoint, createMarker, fitMapToMarkers, clearMarkers, searchNearbySubwayStations } from '../utils/naverMapUtils';
 
 export const useModal = () => {
     const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
@@ -110,6 +110,36 @@ export const useModal = () => {
             const centerMarker = createMarker(map, centerPoint, '만날 곳!', 'center');
             newMarkers.push(centerMarker);
             allPositions.push(centerPoint);
+
+            // --- [디버깅용 로그] --- //
+            console.log(`중간지점 좌표: lat=${centerPoint.lat()}, lng=${centerPoint.lng()}`);
+            // --- [디버깅용 로그 끝] --- //
+
+            // 가장 가까운 지하철역 검색 및 마커 추가
+            const subwayStationResult = await searchNearbySubwayStations(centerPoint);
+
+            // --- [디버깅용 로그] --- //
+            console.log("--- 지하철역 검색 결과 ---");
+            if (subwayStationResult) {
+                console.log("API 응답 (전체):", subwayStationResult);
+                console.log("검색된 역 목록:", subwayStationResult.result.items);
+            } else {
+                console.log("검색된 지하철역이 없습니다.");
+            }
+            // --- [디버깅용 로그 끝] --- //
+
+            if (subwayStationResult && subwayStationResult.result.items.length > 0) {
+                // 거리를 기준으로 결과를 직접 정렬
+                const sortedStations = subwayStationResult.result.items.sort((a, b) => {
+                    return parseFloat(a.distance || '0') - parseFloat(b.distance || '0');
+                });
+                const nearestStation = sortedStations[0];
+                const stationPosition = new naver.maps.LatLng(parseFloat(nearestStation.mapy), parseFloat(nearestStation.mapx));
+                const stationName = nearestStation.title.replace(/<\/?b>/g, '');
+                const stationMarker = createMarker(map, stationPosition, stationName, 'station');
+                newMarkers.push(stationMarker);
+                allPositions.push(stationPosition);
+            }
 
             // 마커 상태 업데이트
             setMarkers(newMarkers);
