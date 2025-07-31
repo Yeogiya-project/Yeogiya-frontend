@@ -1,12 +1,17 @@
 import './App.css'
+import Layout from "./components/layouts/Layout";
+import {BrowserRouter} from "react-router-dom";
+import Router from "./components/routers/Router";
 
 function App() {
 
     return (
         <>
-            <p className="text-xl">
-                Click on the Vite and React logos to learn more
-            </p>
+            <BrowserRouter>
+                <Layout>
+                    <Router/>
+                </Layout>
+            </BrowserRouter>
         </>
     )
 }
