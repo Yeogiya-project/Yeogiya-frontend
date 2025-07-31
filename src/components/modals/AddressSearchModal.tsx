@@ -27,13 +27,16 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
         closeModal();
     };
 
+    // 현재 위치 사용하기 버튼을 클릭했을 때 실행되는 간단한 함수
     const handleGetCurrentLocation = async () => {
         try {
-            const address = await getCurrentLocationAddress();
-            onSelectAddress(address);
+            const result = await getCurrentLocationAddress();
+            onSelectAddress(result.address);  // 주소만 전달
             closeModal();
         } catch (error) {
-            alert(error instanceof Error ? error.message : '현재 위치를 가져오는 중 오류가 발생했습니다.');
+            if (error instanceof Error) {
+                alert('현재 위치를 가져올 수 없습니다: ' + error.message);
+            }
         }
     };
 
@@ -82,7 +85,8 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
                         >
                             {loading ? (
                                 <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
+                                    <div
+                                        className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
                                     검색중...
                                 </>
                             ) : (
@@ -202,7 +206,8 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
                             </div>
                             <div className="text-xl font-bold text-gray-700 mb-3">검색 결과가 없어요</div>
                             <div className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
-                                &apos;<span className="font-semibold text-gray-700">{searchKeyword}</span>&apos;에 대한 결과를 찾을 수 없습니다
+                                &apos;<span className="font-semibold text-gray-700">{searchKeyword}</span>&apos;에 대한 결과를
+                                찾을 수 없습니다
                             </div>
                             <div
                                 className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-2xl border border-blue-200 max-w-md mx-auto">

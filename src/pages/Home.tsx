@@ -3,6 +3,7 @@ import AddressSearchModal from "../components/modals/AddressSearchModal";
 import WelcomeModal from "../components/modals/WelcomeModal";
 import MeetupSetupModal from "../components/modals/MeetupSetupModal";
 import {useModal} from "../hooks/useModal";
+import {useGeolocation} from "../hooks/useGeolocation.ts";
 
 const Home: React.FC = () => {
     const {
@@ -12,6 +13,7 @@ const Home: React.FC = () => {
         friends,
         map
     } = useModal();
+    const {getCurrentLocationAddress} = useGeolocation();
     const welcomeModalShown = useRef(false);
 
     useEffect(() => {
@@ -19,26 +21,48 @@ const Home: React.FC = () => {
             const mapInstance = new window.naver.maps.Map('map', {
                 center: new window.naver.maps.LatLng(37.5666805, 126.9784147), // 서울 시청
                 zoom: 16,
-                mapTypeControl: false, // 일반/위성 선택 버튼 숨기기
+                mapTypeControl: false,
                 zoomControl: false,
-                logoControl: false, // 네이버 로고도 숨기기
-                scaleControl: false // 축척 표시도 숨기기
+                logoControl: false,
+                scaleControl: false
             });
 
-            // 지도 인스턴스를 useModal 훅에 전달
             map.setMap(mapInstance);
 
-            // 지도 로드 완료 후 Welcome 모달 자동 열기 (한 번만)
             naver.maps.Event.addListener(mapInstance, 'tilesloaded', function () {
                 if (!welcomeModalShown.current) {
                     welcomeModalShown.current = true;
                     setTimeout(() => {
-                        handlers.handleNewSearch(); // Welcome 모달 열기
-                    }, 300); // 0.3초로 단축
+                        handlers.handleNewSearch();
+                    }, 300);
                 }
             });
         }
     }, [map, handlers]);
+
+    // 현재 위치 버튼을 클릭했을 때 실행되는 간단한 함수
+    const handleCurrentLocation = async () => {
+        try {
+            // 현재 위치 가져오기
+            const result = await getCurrentLocationAddress();
+
+            // 첫 번째 친구 주소에 현재 위치 설정
+            if (friends.data.length > 0) {
+                friends.updateFriend(friends.data[0].id, 'address', result.address);
+            }
+
+            // 지도를 현재 위치로 이동
+            if (map.instance) {
+                const position = new naver.maps.LatLng(result.latitude, result.longitude);
+                map.instance.setCenter(position);
+                map.instance.setZoom(16);
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                alert('현재 위치를 가져올 수 없습니다: ' + error.message);
+            }
+        }
+    };
 
     return (
         <>
@@ -66,9 +90,7 @@ const Home: React.FC = () => {
                 />
             )}
 
-            {/* 플로팅 액션 버튼들 */}
             <div className="fixed top-1/2 right-4 z-40 flex flex-col gap-3 transform -translate-y-1/2">
-                {/* 다시 검색하기 버튼 (Welcome 모달 열기) */}
                 <button
                     onClick={handlers.handleNewSearch}
                     className="group relative bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white p-4 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-110 hover:rotate-3"
@@ -83,7 +105,6 @@ const Home: React.FC = () => {
                     </div>
                 </button>
 
-                {/* 지도 초기화 버튼 */}
                 <button
                     onClick={handlers.handleReset}
                     className="group relative bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white p-4 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-110 hover:-rotate-3"
@@ -98,29 +119,22 @@ const Home: React.FC = () => {
                     </div>
                 </button>
 
-                {/* 현재 위치로 이동 버튼 */}
                 <button
-                    onClick={() => {
-                        if (map.instance) {
-                            map.instance.setCenter(new naver.maps.LatLng(37.5666805, 126.9784147));
-                            map.instance.setZoom(10);
-                        }
-                    }}
+                    onClick={handleCurrentLocation}
                     className="group relative bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white p-4 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-110 hover:rotate-3"
-                    title="서울 중심으로 이동"
+                    title="현재 위치로 이동"
                 >
                     <div className="flex items-center justify-center">
                         <span className="text-2xl">🏠</span>
                     </div>
                     <div
                         className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                        서울 중심 🌆
+                        현재 위치
                     </div>
                 </button>
 
             </div>
 
-            {/* 하단 상태 표시 */}
             {map.markers.length > 0 && (
                 <div className="fixed bottom-25 left-1/2 transform -translate-x-1/2 z-40">
                     <div
@@ -128,7 +142,7 @@ const Home: React.FC = () => {
                         <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
                             <span className="text-lg">📍</span>
                             <span>
-                                {map.markers.length - 1}명의 친구 + 중간지점이 표시됨
+                                {friends.data.length}명의 친구 + 중간지점이 표시됨
                             </span>
                             <span className="animate-pulse text-green-500">●</span>
                         </div>

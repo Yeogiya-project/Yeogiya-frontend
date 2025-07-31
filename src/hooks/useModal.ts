@@ -1,194 +1,224 @@
-import {useState, useCallback, useMemo} from "react";
-import type {Friend} from "../types/home";
-import { calculateCenterPoint, createMarker, fitMapToMarkers, clearMarkers, searchNearbySubwayStations } from '../utils/naverMapUtils';
+import { useState } from "react";
+import type { Friend } from "../types/home";
+import { createMarker, fitMapToMarkers, clearMarkers } from '../utils/naverMapUtils';
+import { apiClient } from '../utils/api/Api';
 
+// 모달과 친구 데이터를 관리하는 간단한 훅
 export const useModal = () => {
+    // 모달 상태들
     const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
     const [showMeetupSetupModal, setShowMeetupSetupModal] = useState<boolean>(false);
     const [showSearchModal, setShowSearchModal] = useState<boolean>(false);
+    
+    // 현재 주소를 검색중인 친구 ID
     const [currentFriendId, setCurrentFriendId] = useState<number>(0);
+    
+    // 친구들 데이터 (기본값: 2명)
     const [friends, setFriends] = useState<Friend[]>([
-        {id: 1, name: "", address: ""},
-        {id: 2, name: "", address: ""}
+        { id: 1, name: "", address: "" },
+        { id: 2, name: "", address: "" }
     ]);
+    
+    // 지도와 마커들
     const [map, setMap] = useState<naver.maps.Map | null>(null);
     const [markers, setMarkers] = useState<naver.maps.Marker[]>([]);
 
-    const openModal = useMemo(() => ({
-        welcome: () => setShowWelcomeModal(true),
-        meetupSetup: () => setShowMeetupSetupModal(true),
-        search: () => setShowSearchModal(true),
-    }), []);
+    // === 모달 열기/닫기 함수들 ===
+    const openWelcomeModal = () => setShowWelcomeModal(true);
+    const closeWelcomeModal = () => setShowWelcomeModal(false);
+    const openMeetupSetupModal = () => setShowMeetupSetupModal(true);
+    const closeMeetupSetupModal = () => setShowMeetupSetupModal(false);
+    const openSearchModal = () => setShowSearchModal(true);
+    const closeSearchModal = () => setShowSearchModal(false);
 
-    const closeModal = useMemo(() => ({
-        welcome: () => setShowWelcomeModal(false),
-        meetupSetup: () => setShowMeetupSetupModal(false),
-        search: () => setShowSearchModal(false),
-    }), []);
+    // === 기본 동작 함수들 ===
+    
+    // 시작하기 버튼 클릭
+    const handleStart = () => {
+        closeWelcomeModal();
+        openMeetupSetupModal();
+    };
 
-    const handleStart = useCallback(() => {
-        closeModal.welcome();
-        openModal.meetupSetup();
-    }, [closeModal, openModal]);
+    // 뒤로가기 버튼 클릭
+    const handleCloseMeetupSetup = () => {
+        closeMeetupSetupModal();
+        openWelcomeModal();
+    };
 
-    const handleSearchAddress = useCallback((friendId: number) => {
+    // 주소 검색 버튼 클릭
+    const handleSearchAddress = (friendId: number) => {
         setCurrentFriendId(friendId);
-        openModal.search();
-    }, [openModal]);
+        openSearchModal();
+    };
 
-    const handleCloseMeetupSetup = useCallback(() => {
-        closeModal.meetupSetup();
-        openModal.welcome();
-    }, [closeModal, openModal]);
-
-    const updateFriend = useCallback((id: number, field: 'name' | 'address', value: string) => {
-        setFriends(prev => prev.map(friend =>
-            friend.id === id ? {...friend, [field]: value} : friend
-        ));
-    }, []);
-
-    const addFriend = useCallback(() => {
-        if (friends.length < 5) {
-            setFriends(prev => [...prev, {
-                id: Math.max(...prev.map(f => f.id)) + 1,
-                name: "",
-                address: ""
-            }]);
-        }
-    }, [friends.length]);
-
-    const removeFriend = useCallback((id: number) => {
-        if (friends.length > 2) {
-            setFriends(prev => prev.filter(friend => friend.id !== id));
-        }
-    }, [friends.length]);
-
-    const handleSelectAddress = useCallback((address: string) => {
+    // 주소 선택 완료
+    const handleSelectAddress = (address: string) => {
         updateFriend(currentFriendId, 'address', address);
-        closeModal.search();
-    }, [closeModal, currentFriendId, updateFriend]);
+        closeSearchModal();
+    };
 
-    const handleFindMeetingPoint = useCallback(async (friendsData: Friend[]) => {
-        if (!map) {
-            return;
+    // === 친구 데이터 관리 함수들 ===
+    
+    // 친구 정보 업데이트 (이름 또는 주소)
+    const updateFriend = (id: number, field: 'name' | 'address', value: string) => {
+        setFriends(prevFriends => 
+            prevFriends.map(friend => 
+                friend.id === id ? { ...friend, [field]: value } : friend
+            )
+        );
+    };
+
+    // 친구 추가 (최대 5명)
+    const addFriend = () => {
+        if (friends.length < 5) {
+            const newId = Math.max(...friends.map(f => f.id)) + 1;
+            setFriends(prevFriends => [...prevFriends, { id: newId, name: "", address: "" }]);
         }
+    };
+
+    // 친구 삭제 (최소 2명 유지)
+    const removeFriend = (id: number) => {
+        if (friends.length > 2) {
+            setFriends(prevFriends => prevFriends.filter(friend => friend.id !== id));
+        }
+    };
+
+    // === 중간지점 찾기 메인 함수 ===
+    const handleFindMeetingPoint = async (friendsData: Friend[]) => {
+        if (!map) return;
 
         try {
+            console.log('중간지점 찾기 시작...');
+            
             // 기존 마커들 제거
             clearMarkers(markers);
             
-            // 주소 목록 추출
-            const addresses = friendsData.map(friend => friend.address);
+            // 1단계: 각 친구의 주소를 좌표로 변환
+            const locations: Array<{lat: number, lng: number}> = [];
+            
+            for (const friend of friendsData) {
+                try {
+                    const response = await apiClient.searchAddress(friend.address);
+                    if (response.items && response.items.length > 0) {
+                        const item = response.items[0];
+                        locations.push({
+                            lat: parseFloat(item.mapY),
+                            lng: parseFloat(item.mapX)
+                        });
+                        console.log(`${friend.name} 위치:`, item.mapY, item.mapX);
+                    }
+                } catch (error) {
+                    console.error(`${friend.name} 주소 변환 실패:`, error);
+                }
+            }
 
-            // 중간지점 계산
-            const centerPoint = await calculateCenterPoint(addresses);
+            if (locations.length < 2) {
+                alert('중간지점을 계산하기에 유효한 주소가 부족합니다.');
+                return;
+            }
 
-            // 새로운 마커들 생성
+            // 2단계: 중간지점 계산
+            const centerResult = await apiClient.calculateCenterPoint(locations);
+            const centerPoint = new naver.maps.LatLng(centerResult.lat, centerResult.lng);
+            console.log('중간지점:', centerResult.lat, centerResult.lng);
+
+            // 3단계: 지도에 마커들 표시
             const newMarkers: naver.maps.Marker[] = [];
             const allPositions: naver.maps.LatLng[] = [];
 
             // 친구들 위치 마커 추가
-            for (let i = 0; i < friendsData.length; i++) {
-                const friend = friendsData[i];
-                try {
-                    // geocode 함수 사용하여 주소를 좌표로 변환
-                    const response = await import('../utils/naverMapUtils').then(utils => utils.geocode(friend.address));
-                    if (response.v2.addresses.length > 0) {
-                        const addr = response.v2.addresses[0];
-                        const position = new naver.maps.LatLng(parseFloat(addr.y), parseFloat(addr.x));
-                        
-                        // 업그레이드된 마커 생성 (친구 이름과 인덱스 전달)
-                        const marker = createMarker(map, position, friend.name, 'friend', i);
-                        newMarkers.push(marker);
-                        allPositions.push(position);
-                    }
-                } catch (error) {
+            friendsData.forEach((friend, index) => {
+                if (index < locations.length) {
+                    const location = locations[index];
+                    const position = new naver.maps.LatLng(location.lat, location.lng);
+                    const marker = createMarker(map, position, friend.name, 'friend', index);
+                    newMarkers.push(marker);
+                    allPositions.push(position);
                 }
-            }
+            });
 
-            // 중간지점 마커 추가 (특별한 디자인)
-            const centerMarker = createMarker(map, centerPoint, '만날 곳!', 'center');
+            // 중간지점 마커 추가
+            const centerMarker = createMarker(map, centerPoint, '중간지점', 'center');
             newMarkers.push(centerMarker);
             allPositions.push(centerPoint);
 
-            // --- [디버깅용 로그] --- //
-            console.log(`중간지점 좌표: lat=${centerPoint.lat()}, lng=${centerPoint.lng()}`);
-            // --- [디버깅용 로그 끝] --- //
-
-            // 가장 가까운 지하철역 검색 및 마커 추가
-            const subwayStationResult = await searchNearbySubwayStations(centerPoint);
-
-            // --- [디버깅용 로그] --- //
-            console.log("--- 지하철역 검색 결과 ---");
-            if (subwayStationResult) {
-                console.log("API 응답 (전체):", subwayStationResult);
-                console.log("검색된 역 목록:", subwayStationResult.result.items);
-            } else {
-                console.log("검색된 지하철역이 없습니다.");
-            }
-            // --- [디버깅용 로그 끝] --- //
-
-            if (subwayStationResult && subwayStationResult.result.items.length > 0) {
-                // 거리를 기준으로 결과를 직접 정렬
-                const sortedStations = subwayStationResult.result.items.sort((a, b) => {
-                    return parseFloat(a.distance || '0') - parseFloat(b.distance || '0');
-                });
-                const nearestStation = sortedStations[0];
-                const stationPosition = new naver.maps.LatLng(parseFloat(nearestStation.mapy), parseFloat(nearestStation.mapx));
-                const stationName = nearestStation.title.replace(/<\/?b>/g, '');
-                const stationMarker = createMarker(map, stationPosition, stationName, 'station');
-                newMarkers.push(stationMarker);
-                allPositions.push(stationPosition);
+            // 4단계: 근처 지하철역 찾기
+            try {
+                const stationResult = await apiClient.findNearbyStations(centerResult.lat, centerResult.lng);
+                if (stationResult?.items?.length > 0) {
+                    const nearestStation = stationResult.items[0];
+                    const stationPosition = new naver.maps.LatLng(
+                        parseFloat(nearestStation.mapY), 
+                        parseFloat(nearestStation.mapX)
+                    );
+                    const stationName = nearestStation.title.replace(/<\/?b>/g, '');
+                    const stationMarker = createMarker(map, stationPosition, stationName, 'station');
+                    newMarkers.push(stationMarker);
+                    allPositions.push(stationPosition);
+                    console.log('가장 가까운 지하철역:', stationName);
+                }
+            } catch (error) {
+                console.error('지하철역 검색 실패:', error);
             }
 
-            // 마커 상태 업데이트
+            // 5단계: 지도 영역 조정 및 완료
             setMarkers(newMarkers);
-
-            // 모든 마커가 보이도록 지도 영역 조정
             fitMapToMarkers(map, allPositions);
-
-            // 모달 닫기
-            closeModal.meetupSetup();
+            closeMeetupSetupModal();
             
+            console.log('중간지점 찾기 완료!');
+
         } catch (error) {
+            console.error('중간지점 찾기 실패:', error);
             alert('중간지점을 찾는 중 오류가 발생했습니다.');
         }
-    }, [map, markers, closeModal]);
+    };
 
-    // 지도 및 데이터 초기화 함수
-    const handleReset = useCallback(() => {
-        // 기존 마커들 제거
+    // === 초기화 및 새 검색 함수들 ===
+    
+    // 모든 데이터 초기화
+    const handleReset = () => {
         clearMarkers(markers);
         setMarkers([]);
-        
-        // 친구 데이터 초기화
         setFriends([
-            {id: 1, name: "", address: ""},
-            {id: 2, name: "", address: ""}
+            { id: 1, name: "", address: "" },
+            { id: 2, name: "", address: "" }
         ]);
         
-        // 지도를 서울 시청으로 리셋
         if (map) {
-            map.setCenter(new naver.maps.LatLng(37.5666805, 126.9784147));
-            map.setZoom(10);
+            map.setCenter(new naver.maps.LatLng(37.5666805, 126.9784147)); // 서울 시청
+            map.setZoom(16);
         }
-        
-    }, [map, markers]);
+    };
 
-    // 새로운 검색 시작 (Welcome 모달 열기)
-    const handleNewSearch = useCallback(() => {
+    // 새로운 검색 시작
+    const handleNewSearch = () => {
         handleReset();
-        openModal.welcome();
-    }, [handleReset, openModal]);
+        openWelcomeModal();
+    };
 
+    // 외부에서 사용할 모든 데이터와 함수들 반환
     return {
+        // 모달 상태
         show: {
             welcome: showWelcomeModal,
             meetupSetup: showMeetupSetupModal,
             search: showSearchModal
         },
-        openModal,
-        closeModal,
+        
+        // 모달 제어 함수들
+        openModal: {
+            welcome: openWelcomeModal,
+            meetupSetup: openMeetupSetupModal,
+            search: openSearchModal
+        },
+        closeModal: {
+            welcome: closeWelcomeModal,
+            meetupSetup: closeMeetupSetupModal,
+            search: closeSearchModal
+        },
+        
+        // 주요 동작 함수들
         handlers: {
             handleStart,
             handleSearchAddress,
@@ -198,13 +228,19 @@ export const useModal = () => {
             handleReset,
             handleNewSearch
         },
+        
+        // 친구 데이터와 관리 함수들
         friends: {
             data: friends,
             updateFriend,
             addFriend,
             removeFriend
         },
+        
+        // 현재 검색중인 친구 ID
         currentFriendId,
+        
+        // 지도와 마커 정보
         map: {
             instance: map,
             setMap,
@@ -212,4 +248,4 @@ export const useModal = () => {
             setMarkers
         }
     };
-}
+};
