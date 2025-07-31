@@ -1,4 +1,4 @@
-import {useState, useCallback} from "react";
+import {useState, useCallback, useMemo} from "react";
 import type {Friend} from "../types/home";
 import { calculateCenterPoint, createMarker, fitMapToMarkers, clearMarkers } from '../utils/naverMapUtils';
 
@@ -14,17 +14,17 @@ export const useModal = () => {
     const [map, setMap] = useState<naver.maps.Map | null>(null);
     const [markers, setMarkers] = useState<naver.maps.Marker[]>([]);
 
-    const openModal = {
+    const openModal = useMemo(() => ({
         welcome: () => setShowWelcomeModal(true),
         meetupSetup: () => setShowMeetupSetupModal(true),
         search: () => setShowSearchModal(true),
-    }
+    }), []);
 
-    const closeModal = {
+    const closeModal = useMemo(() => ({
         welcome: () => setShowWelcomeModal(false),
         meetupSetup: () => setShowMeetupSetupModal(false),
         search: () => setShowSearchModal(false),
-    }
+    }), []);
 
     const handleStart = useCallback(() => {
         closeModal.welcome();
@@ -70,7 +70,6 @@ export const useModal = () => {
 
     const handleFindMeetingPoint = useCallback(async (friendsData: Friend[]) => {
         if (!map) {
-            console.error('지도가 초기화되지 않았습니다.');
             return;
         }
 
@@ -80,11 +79,9 @@ export const useModal = () => {
             
             // 주소 목록 추출
             const addresses = friendsData.map(friend => friend.address);
-            console.log('주소 목록:', addresses);
 
             // 중간지점 계산
             const centerPoint = await calculateCenterPoint(addresses);
-            console.log('중간지점:', centerPoint.toString());
 
             // 새로운 마커들 생성
             const newMarkers: naver.maps.Marker[] = [];
@@ -106,7 +103,6 @@ export const useModal = () => {
                         allPositions.push(position);
                     }
                 } catch (error) {
-                    console.error(`${friend.name} 위치 마커 생성 실패:`, error);
                 }
             }
 
@@ -125,10 +121,9 @@ export const useModal = () => {
             closeModal.meetupSetup();
             
         } catch (error) {
-            console.error('중간지점 찾기 오류:', error);
             alert('중간지점을 찾는 중 오류가 발생했습니다.');
         }
-    }, [map, markers]);
+    }, [map, markers, closeModal]);
 
     // 지도 및 데이터 초기화 함수
     const handleReset = useCallback(() => {
@@ -148,14 +143,13 @@ export const useModal = () => {
             map.setZoom(10);
         }
         
-        console.log('지도 및 데이터 초기화 완료');
     }, [map, markers]);
 
     // 새로운 검색 시작 (Welcome 모달 열기)
     const handleNewSearch = useCallback(() => {
         handleReset();
         openModal.welcome();
-    }, [handleReset]);
+    }, [handleReset, openModal]);
 
     return {
         show: {

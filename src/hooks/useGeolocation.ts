@@ -21,7 +21,7 @@ const checkGeolocationPermission = async (): Promise<PermissionState | null> => 
     try {
         const permission = await navigator.permissions.query({ name: 'geolocation' });
         return permission.state;
-    } catch (error) {
+    } catch {
         console.log('Permission API not supported');
         return null;
     }
@@ -75,15 +75,12 @@ export const useGeolocation = () => {
         try {
             const position = await getCurrentPosition();
             const { latitude, longitude } = position.coords;
-            console.log('현재 좌표:', { latitude, longitude });
 
             // 네이버 지도 API로 실제 주소 변환
             const latlng = new naver.maps.LatLng(latitude, longitude);
             const address = await reverseGeocode(latlng);
             return address;
         } catch (error) {
-            console.error('위치 가져오기 오류:', error);
-
             let errorMessage: string;
             if (error instanceof GeolocationPositionError) {
                 errorMessage = getGeolocationErrorMessage(error);

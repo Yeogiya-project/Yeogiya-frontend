@@ -39,9 +39,7 @@ const Home: React.FC = () => {
                 }
             });
             
-            console.log('지도 초기화 완료');
         } else if (!window.naver?.maps) {
-            console.error("네이버 지도 API가 로드되지 않았습니다.");
         }
     }, [map, handlers]);
 

@@ -42,10 +42,10 @@ api.interceptors.response.use(
 // CRUD 함수들
 export const apiClient = {
     // GET 요청
-    get: async <T = any>(url: string, params?: any): Promise<T> => {
+    get: async <T = unknown>(url: string, params?: Record<string, unknown>): Promise<T> => {
         try {
             const response = await api.get(url, {params});
-            return response.data;
+            return response.data as T;
         } catch (error) {
             console.error('GET 요청 실패:', error);
             throw error;
@@ -53,10 +53,10 @@ export const apiClient = {
     },
 
     // POST 요청
-    post: async (url: string, data?: any) => {
+    post: async <T = unknown>(url: string, data?: Record<string, unknown>): Promise<T> => {
         try {
             const response = await api.post(url, data);
-            return response.data;
+            return response.data as T;
         } catch (error) {
             console.error('POST 요청 실패:', error);
             throw error;
@@ -64,10 +64,10 @@ export const apiClient = {
     },
 
     // PUT 요청
-    put: async (url: string, data?: any) => {
+    put: async <T = unknown>(url: string, data?: Record<string, unknown>): Promise<T> => {
         try {
             const response = await api.put(url, data);
-            return response.data;
+            return response.data as T;
         } catch (error) {
             console.error('PUT 요청 실패:', error);
             throw error;

@@ -76,7 +76,7 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
                             className="w-full p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-purple-400 focus:bg-white transition-all duration-200 text-gray-800 placeholder-gray-500 text-lg"
                         />
                         <button
-                            onClick={handleSearch}
+                            onClick={() => handleSearch()}
                             disabled={loading}
                             className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                         >
@@ -202,7 +202,7 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
                             </div>
                             <div className="text-xl font-bold text-gray-700 mb-3">검색 결과가 없어요</div>
                             <div className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
-                                '<span className="font-semibold text-gray-700">{searchKeyword}</span>'에 대한 결과를 찾을 수 없습니다
+                                &apos;<span className="font-semibold text-gray-700">{searchKeyword}</span>&apos;에 대한 결과를 찾을 수 없습니다
                             </div>
                             <div
                                 className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-2xl border border-blue-200 max-w-md mx-auto">

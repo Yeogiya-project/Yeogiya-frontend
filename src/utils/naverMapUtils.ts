@@ -1,9 +1,8 @@
 import type { 
     NaverReverseGeocodeResult, 
-    NaverMapLand, 
-    NaverMapRegion, 
-    NaverGeocodeResponse 
+    NaverGeocodeResponse
 } from '../types/geolocation';
+import type { NaverSearchResult, NaverServiceCallback } from '../types/naver-maps';
 
 // 네이버 지도 API 헬퍼 함수들
 export const hasArea = (area: { name?: string }): boolean => {
@@ -64,7 +63,7 @@ export const makeAddress = (item: NaverReverseGeocodeResult): string => {
             }
         }
 
-        if (isRoadAddress === true) {
+        if (isRoadAddress) {
             if (checkLastString(dongmyun, '면')) {
                 ri = land.name;
             } else {
@@ -89,19 +88,14 @@ export const reverseGeocode = (latlng: naver.maps.LatLng): Promise<string> => {
             return;
         }
 
-        naver.maps.Service.reverseGeocode({
-            coords: latlng,
-            orders: [
-                naver.maps.Service.OrderType.ADDR,
-                naver.maps.Service.OrderType.ROAD_ADDR
-            ].join(',')
-        }, function(status, response) {
+        const callback: NaverServiceCallback = (status, response) => {
             if (status === naver.maps.Service.Status.ERROR) {
                 reject(new Error('주소 검색에 실패했습니다.'));
                 return;
             }
 
-            const items = response.v2.results;
+            const naverResponse = response as { v2: { results: NaverReverseGeocodeResult[] } };
+            const items = naverResponse.v2.results;
             if (!items || items.length === 0) {
                 reject(new Error('주소를 찾을 수 없습니다.'));
                 return;
@@ -118,7 +112,15 @@ export const reverseGeocode = (latlng: naver.maps.LatLng): Promise<string> => {
             }
 
             resolve(address);
-        });
+        };
+
+        naver.maps.Service.reverseGeocode({
+            coords: latlng,
+            orders: [
+                naver.maps.Service.OrderType.ADDR,
+                naver.maps.Service.OrderType.ROAD_ADDR
+            ].join(',')
+        }, callback);
     });
 };
 
@@ -129,61 +131,93 @@ export const geocode = (address: string): Promise<NaverGeocodeResponse> => {
             return;
         }
 
-        naver.maps.Service.geocode({
-            query: address
-        }, function(status, response) {
+        const callback: NaverServiceCallback = (status, response) => {
             if (status === naver.maps.Service.Status.ERROR) {
                 reject(new Error('주소 검색에 실패했습니다.'));
                 return;
             }
 
-            if (response.v2.meta.totalCount === 0) {
+            const geocodeResponse = response as NaverGeocodeResponse;
+            if (geocodeResponse.v2.meta.totalCount === 0) {
+                reject(new Error('검색 결과가 없습니다.'));
+                return;
+            }
+
+            resolve(geocodeResponse);
+        };
+
+        naver.maps.Service.geocode({
+            query: address
+        }, callback);
+    });
+};
+
+// 네이버 Local Search API를 사용한 장소 검색 (POI, 지명 등)
+export const searchPlaces = (query: string): Promise<NaverSearchResult> => {
+    return new Promise((resolve, reject) => {
+        if (!window.naver?.maps?.Service) {
+            reject(new Error('네이버 지도 API가 로드되지 않았습니다.'));
+            return;
+        }
+
+        const callback: NaverServiceCallback<NaverSearchResult> = (status, response) => {
+            if (status === naver.maps.Service.Status.ERROR) {
+                reject(new Error('장소 검색에 실패했습니다.'));
+                return;
+            }
+
+            if (!response.result || response.result.total === 0) {
                 reject(new Error('검색 결과가 없습니다.'));
                 return;
             }
 
             resolve(response);
-        });
+        };
+
+        naver.maps.Service.search({
+            query: query,
+            type: naver.maps.Service.SearchType.PLACE
+        }, callback);
     });
 };
 
 // 중간지점 계산 함수
-export const calculateCenterPoint = (addresses: string[]): Promise<naver.maps.LatLng> => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            // 모든 주소를 좌표로 변환
-            const coordinates: naver.maps.LatLng[] = [];
-            
-            for (const address of addresses) {
-                const response = await geocode(address);
-                const firstResult = response.v2.addresses[0];
-                if (firstResult) {
-                    const lat = parseFloat(firstResult.y);
-                    const lng = parseFloat(firstResult.x);
-                    coordinates.push(new naver.maps.LatLng(lat, lng));
-                }
-            }
-
-            if (coordinates.length === 0) {
-                reject(new Error('좌표를 찾을 수 없습니다.'));
-                return;
-            }
-
-            // 중간지점 계산 (평균 좌표)
-            const totalLat = coordinates.reduce((sum, coord) => sum + coord.lat(), 0);
-            const totalLng = coordinates.reduce((sum, coord) => sum + coord.lng(), 0);
-            
-            const centerLat = totalLat / coordinates.length;
-            const centerLng = totalLng / coordinates.length;
-
-            resolve(new naver.maps.LatLng(centerLat, centerLng));
-        } catch (error) {
-            reject(error);
+export const calculateCenterPoint = async (addresses: string[]): Promise<naver.maps.LatLng> => {
+    // 모든 주소를 좌표로 변환
+    const coordinates: naver.maps.LatLng[] = [];
+    
+    for (const address of addresses) {
+        const response = await geocode(address);
+        const firstResult = response.v2.addresses[0];
+        if (firstResult) {
+            const lat = parseFloat(firstResult.y);
+            const lng = parseFloat(firstResult.x);
+            coordinates.push(new naver.maps.LatLng(lat, lng));
         }
-    });
+    }
+
+    if (coordinates.length === 0) {
+        throw new Error('좌표를 찾을 수 없습니다.');
+    }
+
+    // 중간지점 계산 (평균 좌표)
+    const totalLat = coordinates.reduce((sum, coord) => sum + coord.lat(), 0);
+    const totalLng = coordinates.reduce((sum, coord) => sum + coord.lng(), 0);
+    
+    const centerLat = totalLat / coordinates.length;
+    const centerLng = totalLng / coordinates.length;
+
+    return new naver.maps.LatLng(centerLat, centerLng);
 };
 
 // 커스텀 마커 HTML 생성 함수
+const hexToRgba = (hex: string, alpha: number): string => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 const createCustomMarkerHTML = (name: string, emoji: string, color: string, isCenter: boolean = false): string => {
     const centerAnimation = isCenter ? `
         @keyframes centerPulse {
@@ -217,7 +251,7 @@ const createCustomMarkerHTML = (name: string, emoji: string, color: string, isCe
             <div style="
                 width: ${isCenter ? '50px' : '40px'};
                 height: ${isCenter ? '60px' : '50px'};
-                background: linear-gradient(135deg, ${color}FF, ${color}CC);
+                background: linear-gradient(135deg, ${hexToRgba(color, 1)}, ${hexToRgba(color, 0.8)});
                 border-radius: 20px 20px 20px 5px;
                 border: 3px solid white;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.3);
