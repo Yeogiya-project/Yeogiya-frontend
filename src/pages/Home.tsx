@@ -11,7 +11,8 @@ const Home: React.FC = () => {
         closeModal,
         handlers,
         friends,
-        map
+        map,
+        meetingPointInfo
     } = useModal();
     const {getCurrentLocationAddress} = useGeolocation();
     const welcomeModalShown = useRef(false);
@@ -94,14 +95,14 @@ const Home: React.FC = () => {
                 <button
                     onClick={handlers.handleNewSearch}
                     className="group relative bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white p-4 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-110 hover:rotate-3"
-                    title="새로운 검색 시작하기"
+                    title="모임 장소 찾기"
                 >
                     <div className="flex items-center justify-center">
                         <span className="text-2xl">🔍</span>
                     </div>
                     <div
                         className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                        새로운 검색 🆕
+                        모임 장소 찾기
                     </div>
                 </button>
 
@@ -115,7 +116,7 @@ const Home: React.FC = () => {
                     </div>
                     <div
                         className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                        초기화 ♻️
+                        초기화
                     </div>
                 </button>
 
@@ -135,21 +136,25 @@ const Home: React.FC = () => {
 
             </div>
 
-            {map.markers.length > 0 && (
+            {meetingPointInfo && (
                 <div className="fixed bottom-25 left-1/2 transform -translate-x-1/2 z-40">
-                    <div
-                        className="bg-white/90 backdrop-blur-sm rounded-full px-6 py-3 shadow-2xl border-2 border-white/50">
+                    <button
+                        onClick={handlers.navigateToMeetingPoint}
+                        className="group bg-white/90 backdrop-blur-sm rounded-full px-6 py-3 shadow-2xl border-2 border-white/50 hover:bg-white/95 hover:shadow-3xl transform transition-all duration-300 hover:scale-105 cursor-pointer"
+                    >
                         <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
                             <span className="text-lg">📍</span>
                             <span>
-                                {friends.data.length}명의 친구 + 중간지점이 표시됨
+                                {meetingPointInfo.friendCount}명의 친구 + 중간지점이 표시됨
                             </span>
                             <span className="animate-pulse text-green-500">●</span>
                         </div>
-                    </div>
+                        <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+                            클릭하여 중간지점으로 이동
+                        </div>
+                    </button>
                 </div>
             )}
-
 
             <div className="w-full h-full">
                 <div

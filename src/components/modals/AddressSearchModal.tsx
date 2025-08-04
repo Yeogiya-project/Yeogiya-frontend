@@ -242,6 +242,10 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
                                     {['강남역', '홍대입구역', '건대입구역', '명동', '이태원'].map((keyword, index) => (
                                         <button
                                             key={index}
+                                            onClick={() => {
+                                                handleKeywordChange(keyword);
+                                                handleSearch(keyword);
+                                            }}
                                             className="px-3 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-medium rounded-full transition-colors duration-200 transform hover:scale-105"
                                         >
                                             {keyword}

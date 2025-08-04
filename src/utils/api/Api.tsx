@@ -99,18 +99,6 @@ export const apiClient = {
         }
     },
 
-    // Nearby stations search
-    findNearbyStations: async (lat: number, lng: number): Promise<BackendAddressSearchResponse> => {
-        try {
-            const response = await api.get<BackendAddressSearchResponse>('/naver-maps/nearby-stations', {
-                params: { lat, lng }
-            });
-            return response.data;
-        } catch (error) {
-            console.error('지하철역 검색 실패:', error);
-            throw error;
-        }
-    },
 
     // Center point calculation
     calculateCenterPoint: async (locations: Array<{lat: number, lng: number}>): Promise<{lat: number, lng: number, count: number}> => {

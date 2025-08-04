@@ -2,13 +2,25 @@ import { useState } from "react";
 import type { Friend } from "../types/home";
 import { createMarker, fitMapToMarkers, clearMarkers } from '../utils/naverMapUtils';
 import { apiClient } from '../utils/api/Api';
+import { useNaverGeocode } from './useNaverGeocode';
+
+interface MeetingPointInfo {
+    lat: number;
+    lng: number;
+    friendCount: number;
+}
 
 // 모달과 친구 데이터를 관리하는 간단한 훅
 export const useModal = () => {
+    const { geocodeAddress } = useNaverGeocode();
+    
     // 모달 상태들
     const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
     const [showMeetupSetupModal, setShowMeetupSetupModal] = useState<boolean>(false);
     const [showSearchModal, setShowSearchModal] = useState<boolean>(false);
+    
+    // 중간지점 정보 상태
+    const [meetingPointInfo, setMeetingPointInfo] = useState<MeetingPointInfo | null>(null);
     
     // 현재 주소를 검색중인 친구 ID
     const [currentFriendId, setCurrentFriendId] = useState<number>(0);
@@ -95,32 +107,56 @@ export const useModal = () => {
             
             // 1단계: 각 친구의 주소를 좌표로 변환
             const locations: Array<{lat: number, lng: number}> = [];
+            const failedAddresses: string[] = [];
             
             for (const friend of friendsData) {
+                // 주소 유효성 사전 검증
+                if (!friend.address || friend.address.trim().length < 3) {
+                    failedAddresses.push(`${friend.name}: 주소가 입력되지 않음`);
+                    console.log(`${friend.name}의 주소 정보:`, friend.address);
+                    continue;
+                }
+
                 try {
-                    const response = await apiClient.searchAddress(friend.address);
-                    if (response.items && response.items.length > 0) {
-                        const item = response.items[0];
-                        locations.push({
-                            lat: parseFloat(item.mapY),
-                            lng: parseFloat(item.mapX)
-                        });
-                        console.log(`${friend.name} 위치:`, item.mapY, item.mapX);
+                    console.log(`${friend.name}의 주소로 검색 시도:`, friend.address);
+                    
+                    // 네이버 지오코딩 사용 (훅에서 가져온 함수)
+                    const results = await geocodeAddress(friend.address);
+                    
+                    if (results.length > 0) {
+                        const coords = {
+                            lat: parseFloat(results[0].mapY),
+                            lng: parseFloat(results[0].mapX)
+                        };
+                        locations.push(coords);
+                        console.log(`${friend.name} 위치:`, coords.lat, coords.lng);
+                    } else {
+                        failedAddresses.push(`${friend.name}: 주소를 찾을 수 없음`);
                     }
                 } catch (error) {
                     console.error(`${friend.name} 주소 변환 실패:`, error);
+                    failedAddresses.push(`${friend.name}: API 호출 실패`);
                 }
             }
 
+            // 실패한 주소가 있으면 사용자에게 알림
+            if (failedAddresses.length > 0) {
+                console.warn('주소 변환 실패:', failedAddresses);
+            }
+
             if (locations.length < 2) {
-                alert('중간지점을 계산하기에 유효한 주소가 부족합니다.');
+                const message = failedAddresses.length > 0 
+                    ? `중간지점을 계산하기에 유효한 주소가 부족합니다.\n실패한 주소: ${failedAddresses.join(', ')}`
+                    : '중간지점을 계산하기에 유효한 주소가 부족합니다. (최소 2개 필요)';
+                alert(message);
                 return;
             }
 
-            // 2단계: 중간지점 계산
-            const centerResult = await apiClient.calculateCenterPoint(locations);
-            const centerPoint = new naver.maps.LatLng(centerResult.lat, centerResult.lng);
-            console.log('중간지점:', centerResult.lat, centerResult.lng);
+            // 2단계: 중간지점 계산 (간단한 평균 계산)
+            const centerLat = locations.reduce((sum, loc) => sum + loc.lat, 0) / locations.length;
+            const centerLng = locations.reduce((sum, loc) => sum + loc.lng, 0) / locations.length;
+            const centerPoint = new naver.maps.LatLng(centerLat, centerLng);
+            console.log('중간지점:', centerLat, centerLng);
 
             // 3단계: 지도에 마커들 표시
             const newMarkers: naver.maps.Marker[] = [];
@@ -142,30 +178,32 @@ export const useModal = () => {
             newMarkers.push(centerMarker);
             allPositions.push(centerPoint);
 
-            // 4단계: 근처 지하철역 찾기
-            try {
-                const stationResult = await apiClient.findNearbyStations(centerResult.lat, centerResult.lng);
-                if (stationResult?.items?.length > 0) {
-                    const nearestStation = stationResult.items[0];
-                    const stationPosition = new naver.maps.LatLng(
-                        parseFloat(nearestStation.mapY), 
-                        parseFloat(nearestStation.mapX)
-                    );
-                    const stationName = nearestStation.title.replace(/<\/?b>/g, '');
-                    const stationMarker = createMarker(map, stationPosition, stationName, 'station');
-                    newMarkers.push(stationMarker);
-                    allPositions.push(stationPosition);
-                    console.log('가장 가까운 지하철역:', stationName);
-                }
-            } catch (error) {
-                console.error('지하철역 검색 실패:', error);
-            }
-
-            // 5단계: 지도 영역 조정 및 완료
+            // 4단계: 지도 영역 조정 및 완료
             setMarkers(newMarkers);
-            fitMapToMarkers(map, allPositions);
-            closeMeetupSetupModal();
             
+            // 중간지점을 중심으로 적절한 줌으로 설정
+            map.setCenter(centerPoint);
+            map.setZoom(14); // 적절한 줌 레벨
+            
+            // 모든 마커가 보이도록 추가 조정
+            setTimeout(() => {
+                fitMapToMarkers(map, allPositions);
+                // 너무 가까우면 적절한 줌으로 조정
+                if (map.getZoom() > 16) {
+                    map.setZoom(16);
+                } else if (map.getZoom() < 12) {
+                    map.setZoom(12);
+                }
+            }, 100);
+
+            // 중간지점 정보 저장
+            setMeetingPointInfo({
+                lat: centerLat,
+                lng: centerLng,
+                friendCount: locations.length
+            });
+            
+            closeMeetupSetupModal();
             console.log('중간지점 찾기 완료!');
 
         } catch (error) {
@@ -184,6 +222,7 @@ export const useModal = () => {
             { id: 1, name: "", address: "" },
             { id: 2, name: "", address: "" }
         ]);
+        setMeetingPointInfo(null);
         
         if (map) {
             map.setCenter(new naver.maps.LatLng(37.5666805, 126.9784147)); // 서울 시청
@@ -195,6 +234,15 @@ export const useModal = () => {
     const handleNewSearch = () => {
         handleReset();
         openWelcomeModal();
+    };
+
+    // 중간지점으로 이동하는 함수
+    const navigateToMeetingPoint = () => {
+        if (map && meetingPointInfo) {
+            const centerPoint = new naver.maps.LatLng(meetingPointInfo.lat, meetingPointInfo.lng);
+            map.setCenter(centerPoint);
+            map.setZoom(16);
+        }
     };
 
     // 외부에서 사용할 모든 데이터와 함수들 반환
@@ -226,7 +274,8 @@ export const useModal = () => {
             handleSelectAddress,
             handleFindMeetingPoint,
             handleReset,
-            handleNewSearch
+            handleNewSearch,
+            navigateToMeetingPoint
         },
         
         // 친구 데이터와 관리 함수들
@@ -246,6 +295,9 @@ export const useModal = () => {
             setMap,
             markers,
             setMarkers
-        }
+        },
+        
+        // 중간지점 정보
+        meetingPointInfo
     };
 };
