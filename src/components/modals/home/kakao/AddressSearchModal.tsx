@@ -1,11 +1,11 @@
-import React from "react";
-import {useAddressSearch} from "../../hooks/useAddressSearch";
-import {useGeolocation} from "../../hooks/useGeolocation";
-import type {AddressResult} from "../../types/home";
+import React, {useState} from "react";
+import {useAddressSearch} from "../../../../hooks/home/kakao/useAddressSearch.ts";
+import {kakaoApi} from "../../../../utils/api/kakao/KakaoApi.tsx";
+import type {KakaoBackendSearchResponse} from "../../../../types/api.ts";
 
 interface AddressSearchModalProps {
     closeModal: () => void;
-    onSelectAddress: (address: string) => void;
+    onSelectAddress: (address: any) => void;
 }
 
 const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSelectAddress}) => {
@@ -13,30 +13,77 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
         searchKeyword,
         searchResults,
         loading,
-        totalCount,
         handleSearch,
         handleKeywordChange,
         handleKeyUp
     } = useAddressSearch();
 
-    const {loading: gettingLocation, getCurrentLocationAddress} = useGeolocation();
+    const [gettingLocation, setGettingLocation] = useState(false);
 
-    const handleSelectAddress = (address: AddressResult) => {
-        const fullAddress = address.roadAddress || address.address;
-        onSelectAddress(fullAddress);
+    const handleSelectAddress = (place: any) => {
+        onSelectAddress({
+            title: place.place_name,
+            address: place.address_name,
+            roadAddress: place.road_address_name,
+            mapX: place.x,
+            mapY: place.y
+        });
         closeModal();
     };
 
-    // 현재 위치 사용하기 버튼을 클릭했을 때 실행되는 간단한 함수
+    // 현재 위치 사용하기 버튼을 클릭했을 때 실행되는 함수
     const handleGetCurrentLocation = async () => {
+        setGettingLocation(true);
+
         try {
-            const result = await getCurrentLocationAddress();
-            onSelectAddress(result.address);  // 주소만 전달
-            closeModal();
+            // 1. GPS로 현재 위치 좌표 가져오기
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('이 브라우저는 위치 서비스를 지원하지 않습니다.'));
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 300000
+                });
+            });
+
+            const {latitude, longitude} = position.coords;
+            console.log('현재 위치:', latitude, longitude);
+
+            // 2. 카카오 reverseGeocoding으로 주소 변환
+            const geocodeResult = await kakaoApi.reverseGeocoding(
+                longitude.toString(), // 카카오는 x가 경도
+                latitude.toString()   // 카카오는 y가 위도
+            );
+
+            console.log('reverseGeocoding 결과:', geocodeResult);
+
+            if (geocodeResult.documents && geocodeResult.documents.length > 0) {
+                const address = geocodeResult.documents[0];
+                onSelectAddress({
+                    title: '현재 위치',
+                    address: address.address?.address_name || '',
+                    roadAddress: address.roadAddress?.address_name || '',
+                    mapX: longitude.toString(),
+                    mapY: latitude.toString()
+                });
+                closeModal();
+            } else {
+                throw new Error('주소를 찾을 수 없습니다.');
+            }
+
         } catch (error) {
+            console.error('현재 위치 가져오기 실패:', error);
             if (error instanceof Error) {
                 alert('현재 위치를 가져올 수 없습니다: ' + error.message);
+            } else {
+                alert('현재 위치를 가져올 수 없습니다.');
             }
+        } finally {
+            setGettingLocation(false);
         }
     };
 
@@ -145,25 +192,13 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
                             <div className="text-lg font-semibold text-gray-700 mb-2">검색중입니다...</div>
                             <div className="text-sm text-gray-500">잠시만 기다려주세요</div>
                         </div>
-                    ) : searchResults.length > 0 ? (
+                    ) : searchResults && searchResults.documents && searchResults.documents.length > 0 ? (
                         <>
-                            <div className="mb-6">
-                                <div
-                                    className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-2xl border border-purple-200">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-2xl">🎯</span>
-                                        <p className="text-sm font-medium text-gray-700">
-                                            총 <span className="font-bold text-purple-600 text-lg">{totalCount}</span>개의
-                                            장소를 찾았어요!
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
                             <div className="space-y-4">
-                                {searchResults.map((result, index) => (
+                                {searchResults.documents.map((place: KakaoBackendSearchResponse['documents'][number], index: number) => (
                                     <div
-                                        key={index}
-                                        onClick={() => handleSelectAddress(result)}
+                                        key={place.id || index}
+                                        onClick={() => handleSelectAddress(place)}
                                         className="group bg-white/80 backdrop-blur-sm p-5 border-2 border-gray-200 rounded-2xl cursor-pointer hover:border-purple-400 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl"
                                     >
                                         <div className="flex items-start gap-4">
@@ -173,21 +208,36 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div
-                                                    className="font-bold text-gray-800 text-lg mb-2 group-hover:text-purple-700 transition-colors duration-200"
-                                                    dangerouslySetInnerHTML={{__html: result.title}}>
+                                                    className="font-bold text-gray-800 text-lg mb-2 group-hover:text-purple-700 transition-colors duration-200">
+                                                    {place.place_name}
                                                 </div>
-                                                {result.roadAddress && (
+                                                {place.category_name && (
+                                                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                                                        <span
+                                                            className="bg-orange-100 text-orange-700 px-2 py-1 rounded-lg font-medium">🏷️ 카테고리</span>
+                                                        <span>{place.category_name}</span>
+                                                    </div>
+                                                )}
+
+                                                {place.road_address_name && (
                                                     <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                                                         <span
                                                             className="bg-blue-100 text-blue-700 px-2 py-1 rounded-lg font-medium">📍 도로명</span>
-                                                        <span>{result.roadAddress}</span>
+                                                        <span>{place.road_address_name}</span>
                                                     </div>
                                                 )}
                                                 <div className="flex items-center gap-2 text-sm text-gray-500">
                                                     <span
                                                         className="bg-gray-100 text-gray-600 px-2 py-1 rounded-lg font-medium">🏠 지번</span>
-                                                    <span>{result.address}</span>
+                                                    <span>{place.address_name}</span>
                                                 </div>
+                                                {place.phone && (
+                                                    <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
+                                                        <span
+                                                            className="bg-green-100 text-green-700 px-2 py-1 rounded-lg font-medium">📞 전화</span>
+                                                        <span>{place.phone}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div
                                                 className="flex items-center justify-center w-8 h-8 bg-purple-100 group-hover:bg-purple-200 rounded-full transition-colors duration-200">

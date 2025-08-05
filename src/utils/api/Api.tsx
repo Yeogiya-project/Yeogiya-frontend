@@ -1,5 +1,4 @@
 import axios from 'axios';
-import type { BackendAddressSearchResponse } from '../../types/api';
 
 // API 기본 설정 (프록시 사용)
 const BASE_URL = '/api';
@@ -84,43 +83,5 @@ export const apiClient = {
             console.error('DELETE 요청 실패:', error);
             throw error;
         }
-    },
-
-    // Address search using backend API
-    searchAddress: async (query: string): Promise<BackendAddressSearchResponse> => {
-        try {
-            const response = await api.get<BackendAddressSearchResponse>('/naver-maps/search', {
-                params: { query }
-            });
-            return response.data;
-        } catch (error) {
-            console.error('주소 검색 실패:', error);
-            throw error;
-        }
-    },
-
-
-    // Center point calculation
-    calculateCenterPoint: async (locations: Array<{lat: number, lng: number}>): Promise<{lat: number, lng: number, count: number}> => {
-        try {
-            const response = await api.post('/naver-maps/center-point', locations);
-            return response.data;
-        } catch (error) {
-            console.error('중심점 계산 실패:', error);
-            throw error;
-        }
-    },
-
-    // Reverse geocoding
-    reverseGeocode: async (lat: number, lng: number): Promise<BackendAddressSearchResponse> => {
-        try {
-            const response = await api.get<BackendAddressSearchResponse>('/naver-maps/reverse-geocode', {
-                params: { lat, lng }
-            });
-            return response.data;
-        } catch (error) {
-            console.error('리버스 지오코딩 실패:', error);
-            throw error;
-        }
-    },
+    }
 };
