@@ -30,6 +30,7 @@ const RestaurantPage: React.FC = () => {
         try {
             const result = await fetchRecommendation(lat, lng, keyword, category);
             setRecommendation(result);
+            // 추천에 성공하면, 다음 다시 추천을 위해 사용된 위치를 저장
             setSearchLocation({ lat, lng });
         } catch (err) {
             if (axios.isAxiosError(err) && err.response?.status === 404) {
@@ -43,18 +44,24 @@ const RestaurantPage: React.FC = () => {
     }, []);
 
     const handleRecommend = async (keyword: string, category: string) => {
+        // 다시 추천
         if (searchLocation) {
             await callApi(searchLocation.lat, searchLocation.lng, keyword, category);
             return;
         }
 
+        // 처음 추천
         setIsLoading(true);
         setApiError(null);
 
         try {
+            // 먼저 현재 위치를 가져오려고 시도
             const location = await getCurrentLocation();
+            // 성공하면, 바로 API를 호출.
             await callApi(location.lat, location.lng, keyword, category);
         } catch (err) {
+
+            // 위치 가져오기를 거부하면, 사용자에게 지도를 클릭하라고 안내하고, '지도 클릭 모드'를 활성화
             setApiError('지도에서 원하는 위치를 선택해 주세요.');
             setIsMapClickMode(true);
         } finally {
@@ -63,17 +70,19 @@ const RestaurantPage: React.FC = () => {
     };
 
     const handleMapClick = async (lat: number, lng: number) => {
+        // '지도 클릭 모드'일 때만, 그리고 키워드를 입력했을 때만 동작하도록 수정.
         const keywordInput = document.getElementById('keyword') as HTMLInputElement;
         if (isMapClickMode && keywordInput?.value) {
             await callApi(lat, lng, keywordInput.value, 'FD6');
         }
     };
 
+    // X 버튼을 눌렀을 때 모든 상태를 깨끗하게 초기화하는 함수
     const handleReset = () => {
         setRecommendation(null);
         setApiError(null);
         setIsMapClickMode(false);
-        setSearchLocation(null);
+        setSearchLocation(null); // 기억했던 위치 정보도 초기화
     };
 
     return (

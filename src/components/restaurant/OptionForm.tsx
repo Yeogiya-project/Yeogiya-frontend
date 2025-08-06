@@ -54,7 +54,7 @@ const OptionForm: React.FC<OptionFormProps> = ({ onRecommend, loading }) => {
                 disabled={loading}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-lg text-xl transition-all duration-300 ease-in-out disabled:bg-gray-500 disabled:cursor-not-allowed transform hover:scale-105"
             >
-                {loading ? '두근두근 찾는 중...' : '요기야?'}
+                {loading ? '두근두근 찾는 중...' : '여기요?'}
             </button>
         </form>
     );
