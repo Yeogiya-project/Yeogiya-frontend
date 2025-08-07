@@ -83,5 +83,5 @@ export const apiClient = {
             console.error('DELETE 요청 실패:', error);
             throw error;
         }
-    },
+    }
 };

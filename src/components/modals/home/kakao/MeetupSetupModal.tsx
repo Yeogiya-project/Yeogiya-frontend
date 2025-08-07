@@ -1,4 +1,4 @@
-import type {Friend} from "../../types/home";
+import type {Friend} from "../../../../types/home/home.ts";
 
 interface MeetupSetupModalProps {
     friends: Friend[];
@@ -17,7 +17,7 @@ const MeetupSetupModal = ({
                               onUpdateFriend,
                               onAddFriend,
                               onRemoveFriend,
-                              onFindMeetingPoint
+                              onFindMeetingPoint,
                           }: MeetupSetupModalProps) => {
 
     const handleFindMeetingPoint = () => {
@@ -133,13 +133,13 @@ const MeetupSetupModal = ({
                         ))}
 
                         {/* 친구 추가 버튼 */}
-                        {friends.length < 5 && (
+                        {friends.length < 6 && (
                             <button
                                 onClick={onAddFriend}
                                 className="w-full p-4 border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-xl text-gray-600 hover:text-blue-600 transition-colors flex items-center justify-center gap-2"
                             >
                                 <span className="text-xl">➕</span>
-                                <span>친구 추가 (최대 5명)</span>
+                                <span>친구 추가 (최대 6명)</span>
                             </button>
                         )}
                     </div>

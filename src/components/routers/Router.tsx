@@ -1,12 +1,14 @@
 import {Route, Routes} from "react-router-dom";
 import React from "react";
-import Home from "../../pages/Home";
+import KakaoHome from "../../pages/home/KakaoHome.tsx";
+// import NaverHome from "../../pages/home/NaverHome.tsx";
 
 const Router: React.FC = () => {
     return (
         <>
             <Routes>
-                <Route path="/" element={<Home/>}/>
+                {/*<Route path="/" element={<NaverHome/>}/>*/}
+                <Route path="/" element={<KakaoHome/>}/>
             </Routes>
         </>
     );
