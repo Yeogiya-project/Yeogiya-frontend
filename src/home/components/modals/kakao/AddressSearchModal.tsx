@@ -1,7 +1,7 @@
 import React, {useState} from "react";
-import {useAddressSearch} from "../../../../hooks/home/kakao/useAddressSearch.ts";
-import {kakaoApi} from "../../../../utils/api/kakao/KakaoApi.tsx";
-import type {KakaoBackendSearchResponse} from "../../../../types/api.ts";
+import {useAddressSearch} from "../../../hooks/kakao/useAddressSearch.ts";
+import {kakaoApi} from "../../../utils/kakao/KakaoApi.tsx";
+import type {KakaoBackendSearchResponse} from "../../../types/api.ts";
 
 interface AddressSearchModalProps {
     closeModal: () => void;

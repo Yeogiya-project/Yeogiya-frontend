@@ -1,7 +1,7 @@
 import React, {type ReactNode, useState} from "react";
 import Header from "./header/Header.tsx";
-import Footer from "./Footer";
-import LoginModal from "../modals/LoginModal";
+import Footer from "./Footer.tsx";
+import LoginModal from "../../modals/LoginModal.tsx";
 
 interface LayoutProps {
     children: ReactNode;

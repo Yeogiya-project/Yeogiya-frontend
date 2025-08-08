@@ -1,5 +1,10 @@
-import {apiClient} from '../Api.tsx';
-import type {KakaoBackendReverseGeocodingResponse, KakaoBackendSearchResponse, MeetingPlaceRequest, MeetingPlaceResponse} from '../../../types/api';
+import {apiClient} from '../../../shared/utils/api/Api.tsx';
+import type {
+    KakaoBackendReverseGeocodingResponse,
+    KakaoBackendSearchResponse,
+    MeetingPlaceRequest,
+    MeetingPlaceResponse
+} from '../../types/api.ts';
 
 export const kakaoApi = {
     searchPlaces: async (
@@ -32,8 +37,7 @@ export const kakaoApi = {
             const url = `/kakao-maps/search?${searchParams.toString()}`;
             console.log('요청 URL:', url); // 디버깅용
 
-            const response = await apiClient.get<KakaoBackendSearchResponse>(url);
-            return response;
+            return await apiClient.get<KakaoBackendSearchResponse>(url);
         } catch (error) {
             console.error('주소 검색 실패:', error);
             throw error;
@@ -56,8 +60,7 @@ export const kakaoApi = {
             const url = `/kakao-maps/reverse-geocoding?${searchParams.toString()}`;
             console.log('요청 URL:', url); // 디버깅용
 
-            const response = await apiClient.get<KakaoBackendReverseGeocodingResponse>(url);
-            return response;
+            return await apiClient.get<KakaoBackendReverseGeocodingResponse>(url);
         } catch (error) {
             console.error('주소 검색 실패:', error);
             throw error;
@@ -66,8 +69,7 @@ export const kakaoApi = {
 
     findMeetingPlace: async (request: MeetingPlaceRequest): Promise<MeetingPlaceResponse> => {
         try {
-            const response = await apiClient.post<MeetingPlaceResponse>('/kakao-maps/meeting-place', request);
-            return response;
+            return await apiClient.post<MeetingPlaceResponse>('/kakao-maps/meeting-place', request);
         } catch (error) {
             console.error('중간지점 찾기 실패:', error);
             throw error;

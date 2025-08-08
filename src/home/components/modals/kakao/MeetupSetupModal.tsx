@@ -1,4 +1,4 @@
-import type {Friend} from "../../../../types/home/home.ts";
+import type {Friend} from "../../../types/home.ts";
 
 interface MeetupSetupModalProps {
     friends: Friend[];

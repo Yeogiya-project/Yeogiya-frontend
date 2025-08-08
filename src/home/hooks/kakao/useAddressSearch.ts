@@ -1,6 +1,5 @@
 import {useState} from 'react';
-import type {AddressResult} from "../../../types/home/home.ts";
-import {kakaoApi} from '../../../utils/api/kakao/KakaoApi.tsx';
+import {kakaoApi} from '../../utils/kakao/KakaoApi.tsx';
 
 export const useAddressSearch = () => {
     const [searchKeyword, setSearchKeyword] = useState<string>("");

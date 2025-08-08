@@ -10,6 +10,7 @@ interface NearbyPlace {
     x: string; // 경도
     y: string; // 위도
     distance?: string;
+    place_url?: string;
 }
 
 interface NearbyPlacesPanelProps {
@@ -23,9 +24,17 @@ interface NearbyPlacesPanelProps {
     onToggle: () => void;
     onPlaceClick: (place: NearbyPlace, type: 'subway' | 'restaurant' | 'cafe') => void;
     onTabChange: (tab: 'subway' | 'restaurant' | 'cafe') => void;
+    handleOpenUrl: (url?: string) => void;
 }
 
-const NearbyPlacesPanel: React.FC<NearbyPlacesPanelProps> = ({nearbyPlaces, isOpen, onToggle, onPlaceClick, onTabChange}) => {
+const NearbyPlacesPanel: React.FC<NearbyPlacesPanelProps> = ({
+                                                                 nearbyPlaces,
+                                                                 isOpen,
+                                                                 onToggle,
+                                                                 onPlaceClick,
+                                                                 onTabChange,
+                                                                 handleOpenUrl
+                                                             }) => {
     const [activeTab, setActiveTab] = useState<'subway' | 'restaurant' | 'cafe'>('subway');
 
     const formatDistance = (distance?: string) => {
@@ -102,7 +111,7 @@ const NearbyPlacesPanel: React.FC<NearbyPlacesPanelProps> = ({nearbyPlaces, isOp
                         <div className="relative flex items-start gap-4">
                             {/* 순번 아이콘 */}
                             <div
-                                className={`relative w-12 h-12 bg-gradient-to-br ${getCategoryColor(type)} rounded-2xl flex items-center justify-center text-white font-bold shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                                className={`relative w-7 h-7 bg-gradient-to-br ${getCategoryColor(type)} rounded-2xl flex items-center justify-center text-white font-bold shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                                 {index + 1}
                                 <div
                                     className={`absolute -inset-1 bg-gradient-to-r ${getCategoryColor(type)} rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity duration-300`}></div>
@@ -135,6 +144,17 @@ const NearbyPlacesPanel: React.FC<NearbyPlacesPanelProps> = ({nearbyPlaces, isOp
                                             <span>{place.phone}</span>
                                         </div>
                                     )}
+
+                                    {place.place_url && (
+                                        <div className="flex items-start gap-2 text-sm text-gray-500">
+                                            <span className="text-green-500 mt-0.5">🔗</span>
+                                            <span className="flex-1 cursor-pointer hover:underline break-all"
+                                                  onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleOpenUrl(place.place_url);
+                                                  }}>{place.place_url}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -162,7 +182,7 @@ const NearbyPlacesPanel: React.FC<NearbyPlacesPanelProps> = ({nearbyPlaces, isOp
             }`}>
                 <button
                     onClick={onToggle}
-                    className="group relative bg-white/95 backdrop-blur-md hover:bg-white text-gray-700 hover:text-gray-900 rounded-2xl shadow-2xl border border-gray-200/50 hover:border-blue-300/50 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center p-2 min-h-[80px] w-16"
+                    className="group relative bg-white/95 backdrop-blur-md hover:bg-white text-gray-700 hover:text-gray-900 rounded-2xl shadow-2xl border border-gray-200/50 hover:border-blue-300/50 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center p-2 min-h-[80px] w-16 cursor-pointer"
                 >
                     {/* 아이콘 */}
                     <div
@@ -212,7 +232,7 @@ const NearbyPlacesPanel: React.FC<NearbyPlacesPanelProps> = ({nearbyPlaces, isOp
                                     setActiveTab(tab);
                                     onTabChange(tab);
                                 }}
-                                className={`relative flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-300 transform ${
+                                className={`relative flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-300 transform cursor-pointer ${
                                     activeTab === tab
                                         ? `bg-gradient-to-r ${getCategoryColor(tab)} text-white shadow-lg scale-105 z-10`
                                         : 'text-gray-600 hover:text-gray-800 hover:bg-white/50 hover:shadow-md'
