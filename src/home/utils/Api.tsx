@@ -1,12 +1,12 @@
-import {apiClient} from '../../../shared/utils/api/Api.tsx';
+import {apiClient} from '../../shared/utils/api/Api.tsx';
 import type {
     KakaoBackendReverseGeocodingResponse,
     KakaoBackendSearchResponse,
     MeetingPlaceRequest,
     MeetingPlaceResponse
-} from '../../types/api.ts';
+} from '../types/api.ts';
 
-export const kakaoApi = {
+export const api = {
     searchPlaces: async (
         query: string,
         searchType: 'KEYWORD' | 'CATEGORY' = 'KEYWORD',

@@ -1,7 +1,7 @@
 import {useState} from "react";
-import type {Friend} from "../../types/home.ts";
-import {kakaoApi} from "../../utils/kakao/KakaoApi.tsx";
-import type {MeetingPlaceResponse, MeetingLocation} from "../../types/api.ts";
+import type {Friend} from "../types/home.ts";
+import {api} from "../utils/Api.tsx";
+import type {MeetingPlaceResponse, MeetingLocation} from "../types/api.ts";
 
 export const useModal = () => {
     const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
@@ -74,7 +74,7 @@ export const useModal = () => {
             // 병렬로 여러 카테고리 검색
             const [subwayResults, restaurantResults, cafeResults] = await Promise.all([
                 // 지하철역 (SW8)
-                kakaoApi.searchPlaces('', 'CATEGORY', {
+                api.searchPlaces('', 'CATEGORY', {
                     categoryGroupCode: 'SW8',
                     x: lng,
                     y: lat,
@@ -83,7 +83,7 @@ export const useModal = () => {
                     size: 5
                 }),
                 // 음식점 (FD6)
-                kakaoApi.searchPlaces('', 'CATEGORY', {
+                api.searchPlaces('', 'CATEGORY', {
                     categoryGroupCode: 'FD6',
                     x: lng,
                     y: lat,
@@ -92,7 +92,7 @@ export const useModal = () => {
                     size: 8
                 }),
                 // 카페 (CE7)
-                kakaoApi.searchPlaces('', 'CATEGORY', {
+                api.searchPlaces('', 'CATEGORY', {
                     categoryGroupCode: 'CE7',
                     x: lng,
                     y: lat,
@@ -496,7 +496,7 @@ export const useModal = () => {
             console.log('중간지점 계산 요청 좌표들:', meetingLocations);
 
             // 백엔드 API 호출 (음식점 카테고리로 기본 설정)
-            const meetingPlaceResult = await kakaoApi.findMeetingPlace({
+            const meetingPlaceResult = await api.findMeetingPlace({
                 meetingLocations,
                 categoryGroupCode: 'FD6', // 음식점
                 radius: 5000, // 5km
