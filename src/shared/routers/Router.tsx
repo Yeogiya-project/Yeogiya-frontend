@@ -1,6 +1,6 @@
 import {Route, Routes} from "react-router-dom";
 import React from "react";
-import KakaoHome from "../../pages/home/KakaoHome.tsx";
+import KakaoHome from "../../home/pages/kakao/KakaoHome.tsx";
 // import NaverHome from "../../pages/home/NaverHome.tsx";
 
 const Router: React.FC = () => {

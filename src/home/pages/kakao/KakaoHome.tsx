@@ -1,21 +1,21 @@
 import React, {useEffect, useRef} from "react";
-import {useModal} from "../../hooks/home/kakao/useModal.ts";
-import {useGeolocation} from "../../hooks/home/kakao/useGeolocation.ts";
-import WelcomeModal from "../../components/modals/home/kakao/WelcomeModal.tsx";
-import MeetupSetupModal from "../../components/modals/home/kakao/MeetupSetupModal.tsx";
-import AddressSearchModal from "../../components/modals/home/kakao/AddressSearchModal.tsx";
-import NearbyPlacesPanel from "../../components/ui/NearbyPlacesPanel.tsx";
+import {useModal} from "../../hooks/kakao/useModal.ts";
+import {useGeolocation} from "../../hooks/kakao/useGeolocation.ts";
+import WelcomeModal from "../../components/modals/kakao/WelcomeModal.tsx";
+import MeetupSetupModal from "../../components/modals/kakao/MeetupSetupModal.tsx";
+import AddressSearchModal from "../../components/modals/kakao/AddressSearchModal.tsx";
+import NearbyPlacesPanel from "../../components/panel/kakao/NearbyPlacesPanel.tsx";
 
 const KakaoHome: React.FC = () => {
     const {
         show,
-        openModal,
         closeModal,
         handlers,
         friends,
         map,
         meetingPointInfo,
-        nearbyPlaces
+        nearbyPlaces,
+        handleOpenUrl
     } = useModal();
     const {getCurrentLocationAddress} = useGeolocation();
     const welcomeModalShown = useRef(false);
@@ -34,9 +34,6 @@ const KakaoHome: React.FC = () => {
 
         // 장소 정보 로그 (실제로는 InfoWindow나 마커 표시 가능)
         console.log(`${type} 클릭:`, place.place_name, `(${place.address_name})`);
-        
-        // 간단한 알림으로 장소 정보 표시
-        alert(`📍 ${place.place_name}\n🏠 ${place.address_name}${place.phone ? `\n📞 ${place.phone}` : ''}`);
     };
 
     // 탭 변경 핸들러
@@ -97,7 +94,7 @@ const KakaoHome: React.FC = () => {
                 <div className="fixed top-1/2 right-4 z-50 flex flex-col gap-3 transform -translate-y-1/2">
                     <button
                         onClick={handlers.handleNewSearch}
-                        className="group relative bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white p-4 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-110 hover:rotate-3"
+                        className="group relative bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white p-4 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-110 hover:rotate-3 cursor-pointer"
                         title="모임 장소 찾기"
                     >
                         <div className="flex items-center justify-center">
@@ -111,7 +108,7 @@ const KakaoHome: React.FC = () => {
 
                     <button
                         onClick={handlers.handleReset}
-                        className="group relative bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white p-4 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-110 hover:-rotate-3"
+                        className="group relative bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white p-4 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-110 hover:-rotate-3 cursor-pointer"
                         title="지도 및 데이터 초기화"
                     >
                         <div className="flex items-center justify-center">
@@ -146,7 +143,7 @@ const KakaoHome: React.FC = () => {
                                 }
                             }
                         }}
-                        className="group relative bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white p-4 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-110 hover:rotate-3"
+                        className="group relative bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white p-4 rounded-full shadow-2xl transform transition-all duration-300 hover:scale-110 hover:rotate-3 cursor-pointer"
                         title="현재 위치로 이동"
                     >
                         <div className="flex items-center justify-center">
@@ -197,6 +194,7 @@ const KakaoHome: React.FC = () => {
                         onToggle={handlers.toggleNearbyPanel}
                         onPlaceClick={handlePlaceClick}
                         onTabChange={handleTabChange}
+                        handleOpenUrl={handleOpenUrl}
                     />
                 )}
             </div>

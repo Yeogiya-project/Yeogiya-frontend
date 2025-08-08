@@ -1,4 +1,4 @@
-import { kakaoApi } from "../../../utils/api/kakao/KakaoApi.tsx";
+import { kakaoApi } from "../../utils/kakao/KakaoApi.tsx";
 
 export const useGeolocation = () => {
     const getCurrentLocationAddress = async (): Promise<{
@@ -16,7 +16,12 @@ export const useGeolocation = () => {
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
                     try {
-                        const { latitude, longitude } = position.coords;
+                        const { latitude, longitude, accuracy } = position.coords;
+                        
+                        // GPS 정확도가 너무 낮으면 경고
+                        if (accuracy > 1000) {
+                            console.warn(`GPS 정확도가 낮습니다: ${Math.round(accuracy)}m`);
+                        }
                         
                         // 카카오 reverseGeocoding으로 주소 변환
                         const geocodeResult = await kakaoApi.reverseGeocoding(
@@ -57,8 +62,8 @@ export const useGeolocation = () => {
                 },
                 {
                     enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 300000
+                    timeout: 15000,
+                    maximumAge: 60000  // 1분으로 줄임 (더 자주 새로운 위치 요청)
                 }
             );
         });

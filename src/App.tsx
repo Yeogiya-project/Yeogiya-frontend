@@ -1,7 +1,7 @@
 import './App.css'
-import Layout from "./components/layouts/Layout";
+import Layout from "./shared/components/layouts/Layout.tsx";
 import {BrowserRouter} from "react-router-dom";
-import Router from "./components/routers/Router";
+import Router from "./shared/routers/Router";
 
 function App() {
 

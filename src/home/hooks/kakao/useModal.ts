@@ -1,7 +1,7 @@
 import {useState} from "react";
-import type {Friend} from "../../../types/home/home.ts";
-import {kakaoApi} from "../../../utils/api/kakao/KakaoApi.tsx";
-import type {MeetingPlaceResponse, MeetingLocation} from "../../../types/api";
+import type {Friend} from "../../types/home.ts";
+import {kakaoApi} from "../../utils/kakao/KakaoApi.tsx";
+import type {MeetingPlaceResponse, MeetingLocation} from "../../types/api.ts";
 
 export const useModal = () => {
     const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
@@ -20,7 +20,7 @@ export const useModal = () => {
         restaurant: [],
         cafe: []
     });
-    const [friendCoordinates, setFriendCoordinates] = useState<Map<number, {lat: number, lng: number}>>(new Map());
+    const [friendCoordinates, setFriendCoordinates] = useState<Map<number, { lat: number, lng: number }>>(new Map());
     const [nearbyPlaces, setNearbyPlaces] = useState<{
         subways: any[];
         restaurants: any[];
@@ -68,8 +68,8 @@ export const useModal = () => {
 
     // 주변 장소 검색 함수
     const searchNearbyPlaces = async (lat: number, lng: number) => {
-        setNearbyPlaces(prev => ({ ...prev, loading: true }));
-        
+        setNearbyPlaces(prev => ({...prev, loading: true}));
+
         try {
             // 병렬로 여러 카테고리 검색
             const [subwayResults, restaurantResults, cafeResults] = await Promise.all([
@@ -113,7 +113,7 @@ export const useModal = () => {
             const subwayMarkers: any[] = [];
             const restaurantMarkers: any[] = [];
             const cafeMarkers: any[] = [];
-            
+
             // 지하철역 마커
             (subwayResults.documents || []).forEach((place: any, index: number) => {
                 const position = new window.kakao.maps.LatLng(parseFloat(place.y), parseFloat(place.x));
@@ -144,7 +144,7 @@ export const useModal = () => {
                 restaurant: restaurantMarkers,
                 cafe: cafeMarkers
             };
-            
+
             setNearbyMarkers(newNearbyMarkers);
 
             // 기본적으로 지하철역 마커만 표시
@@ -159,33 +159,33 @@ export const useModal = () => {
 
         } catch (error) {
             console.error('주변 장소 검색 실패:', error);
-            setNearbyPlaces(prev => ({ ...prev, loading: false }));
+            setNearbyPlaces(prev => ({...prev, loading: false}));
         }
     };
 
     // 네이버 스타일 마커 생성 함수
     const createKakaoMarker = (
-        position: kakao.maps.LatLng, 
+        position: kakao.maps.LatLng,
         name: string,
         type: 'friend' | 'center' = 'friend',
         friendIndex?: number
     ) => {
         let emoji: string;
         let color: string;
-        
+
         if (type === 'center') {
             emoji = '🎯';
             color = '#ff4757';
         } else {
             const friendEmojis = ['🙋‍♂️', '🙋‍♀️', '🤗', '😊', '🎉'];
             const friendColors = ['#3742fa', '#ff6348', '#ffa502', '#a55eea', '#1e90ff'];
-            
+
             emoji = friendEmojis[friendIndex! % friendEmojis.length];
             color = friendColors[friendIndex! % friendColors.length];
         }
-        
+
         const isCenter = type === 'center';
-        
+
         const hexToRgba = (hex: string, alpha: number): string => {
             const r = parseInt(hex.slice(1, 3), 16);
             const g = parseInt(hex.slice(3, 5), 16);
@@ -221,9 +221,9 @@ export const useModal = () => {
                     ">${emoji}</span>
                 </div>
                 <div style="
-                    background: ${isCenter ? 
-                        'linear-gradient(135deg, #ff6b6b, #ee5a24)' : 
-                        'linear-gradient(135deg, #667eea, #764ba2)'};
+                    background: ${isCenter ?
+            'linear-gradient(135deg, #ff6b6b, #ee5a24)' :
+            'linear-gradient(135deg, #667eea, #764ba2)'};
                     color: white;
                     padding: ${isCenter ? '6px 12px' : '4px 8px'};
                     border-radius: 12px;
@@ -286,12 +286,12 @@ export const useModal = () => {
                 if (map) {
                     map.setCenter(position);
                     map.setLevel(5);
-                    
+
                     // 마커 정보를 알림으로 표시
-                    const markerInfo = type === 'center' ? 
-                        `중간지점: ${name}` : 
+                    const markerInfo = type === 'center' ?
+                        `중간지점: ${name}` :
                         `${name}의 위치`;
-                    
+
                     // 간단한 정보 표시 (실제 구현에서는 InfoWindow나 커스텀 팝업 사용 가능)
                     console.log(`마커 클릭: ${markerInfo}`);
                 }
@@ -311,7 +311,7 @@ export const useModal = () => {
         let emoji: string;
         let color: string;
         let bgColor: string;
-        
+
         switch (type) {
             case 'subway':
                 emoji = '🚇';
@@ -401,18 +401,18 @@ export const useModal = () => {
                 if (map) {
                     map.setCenter(position);
                     map.setLevel(3);
-                    
+
                     // 장소 정보 팝업 표시
                     const info = `📍 ${place.place_name}\n🏠 ${place.address_name}${place.phone ? `\n📞 ${place.phone}` : ''}`;
                     alert(info);
                 }
             });
-            
+
             // 호버 효과
             (markerElement as HTMLElement).addEventListener('mouseenter', () => {
                 (markerElement as HTMLElement).style.transform = 'translateY(-50%) scale(1.1)';
             });
-            
+
             (markerElement as HTMLElement).addEventListener('mouseleave', () => {
                 (markerElement as HTMLElement).style.transform = 'translateY(-50%) scale(1)';
             });
@@ -438,28 +438,28 @@ export const useModal = () => {
     const handleSelectAddress = (selectedAddress: any) => {
         updateFriend(currentFriendId, 'address', selectedAddress.address);
         closeSearchModal();
-        
+
         // 카카오 지도에 커스텀 마커 추가
         if (map && selectedAddress.mapX && selectedAddress.mapY) {
             const lat = parseFloat(selectedAddress.mapY);
             const lng = parseFloat(selectedAddress.mapX);
             const position = new window.kakao.maps.LatLng(lat, lng);
-            
+
             // 친구 정보 가져오기
             const friend = friends.find(f => f.id === currentFriendId);
             const friendIndex = friends.findIndex(f => f.id === currentFriendId);
-            
+
             // 네이버 스타일 마커 생성
             const customMarker = createKakaoMarker(position, friend?.name || `친구 ${friendIndex + 1}`, 'friend', friendIndex);
             customMarker.setMap(map);
-            
+
             // 마커 배열에 추가
             setMarkers(prev => [...prev, customMarker]);
-            
+
             // 친구의 좌표 정보 저장
             setFriendCoordinates(prev => {
                 const newMap = new Map(prev);
-                newMap.set(currentFriendId, { lat, lng });
+                newMap.set(currentFriendId, {lat, lng});
                 return newMap;
             });
         }
@@ -468,13 +468,13 @@ export const useModal = () => {
     // 중간지점 찾기
     const handleFindMeetingPoint = async () => {
         if (!map) return;
-        
+
         const validFriends = friends.filter(friend => friend.address.trim() !== '');
         if (validFriends.length < 2) {
             alert('최소 2명의 친구 주소가 필요합니다.');
             return;
         }
-        
+
         // 좌표 정보가 있는 친구들 확인
         const meetingLocations: MeetingLocation[] = [];
         for (const friend of validFriends) {
@@ -486,15 +486,15 @@ export const useModal = () => {
                 });
             }
         }
-        
+
         if (meetingLocations.length < 2) {
             alert('주소 검색을 통해 선택된 친구들의 위치 정보가 필요합니다.');
             return;
         }
-        
+
         try {
             console.log('중간지점 계산 요청 좌표들:', meetingLocations);
-            
+
             // 백엔드 API 호출 (음식점 카테고리로 기본 설정)
             const meetingPlaceResult = await kakaoApi.findMeetingPlace({
                 meetingLocations,
@@ -503,32 +503,32 @@ export const useModal = () => {
                 size: 10
             });
             console.log('중간지점 계산 결과:', meetingPlaceResult);
-            
+
             // 중간지점 정보 저장
             setMeetingPointInfo(meetingPlaceResult);
-            
+
             // 추천 장소 정보 로그 출력 (디버깅용)
             if (meetingPlaceResult.recommendedPlaces && meetingPlaceResult.recommendedPlaces.length > 0) {
                 console.log('추천 장소들:', meetingPlaceResult.recommendedPlaces);
             }
-            
+
             // 지도에 중간지점 커스텀 마커 추가
             const centerPosition = new window.kakao.maps.LatLng(
-                meetingPlaceResult.meetingCenterPoint.lat, 
+                meetingPlaceResult.meetingCenterPoint.lat,
                 meetingPlaceResult.meetingCenterPoint.lng
             );
-            
+
             // 중간지점 네이버 스타일 마커 생성
             const centerMarker = createKakaoMarker(centerPosition, '중간지점', 'center');
             centerMarker.setMap(map);
-            
+
             // 마커 배열에 추가
             setMarkers(prev => [...prev, centerMarker]);
-            
+
             // 지도 중심을 중간지점으로 이동
             map.setCenter(centerPosition);
             map.setLevel(5); // 적절한 줌 레벨 설정
-            
+
             // 중간지점 주변 장소 검색
             await searchNearbyPlaces(
                 meetingPlaceResult.meetingCenterPoint.lat,
@@ -537,10 +537,10 @@ export const useModal = () => {
 
             // 주변 정보 패널 열기
             setShowNearbyPanel(true);
-            
+
             // MeetupSetupModal 닫기
             closeMeetupSetupModal();
-            
+
         } catch (error) {
             console.error('중간지점 찾기 실패:', error);
             alert('중간지점을 찾는 중 오류가 발생했습니다.');
@@ -584,8 +584,8 @@ export const useModal = () => {
             cafe: []
         });
         setFriends([
-            { id: 1, name: "", address: "" },
-            { id: 2, name: "", address: "" }
+            {id: 1, name: "", address: ""},
+            {id: 2, name: "", address: ""}
         ]);
         setMeetingPointInfo(null);
         setFriendCoordinates(new Map()); // 좌표 정보도 초기화
@@ -596,7 +596,7 @@ export const useModal = () => {
             loading: false
         }); // 주변 정보도 초기화
         setShowNearbyPanel(false); // 패널도 닫기
-        
+
         if (map) {
             map.setCenter(new window.kakao.maps.LatLng(37.5666805, 126.9784147)); // 서울 시청
             map.setLevel(4);
@@ -608,6 +608,13 @@ export const useModal = () => {
         handleReset();
         openWelcomeModal();
     };
+
+    // URL로 이동하는 함수
+    const handleOpenUrl = (url?: string) => {
+        if(url){
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+    }
 
     return {
         show: {
@@ -651,6 +658,7 @@ export const useModal = () => {
         meetingPointInfo,
         markers,
         nearbyMarkers,
-        nearbyPlaces
+        nearbyPlaces,
+        handleOpenUrl
     };
 };
