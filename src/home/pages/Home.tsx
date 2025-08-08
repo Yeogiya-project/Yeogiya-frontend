@@ -1,12 +1,12 @@
 import React, {useEffect, useRef} from "react";
-import {useModal} from "../../hooks/kakao/useModal.ts";
-import {useGeolocation} from "../../hooks/kakao/useGeolocation.ts";
-import WelcomeModal from "../../components/modals/kakao/WelcomeModal.tsx";
-import MeetupSetupModal from "../../components/modals/kakao/MeetupSetupModal.tsx";
-import AddressSearchModal from "../../components/modals/kakao/AddressSearchModal.tsx";
-import NearbyPlacesPanel from "../../components/panel/kakao/NearbyPlacesPanel.tsx";
+import {useModal} from "../hooks/useModal.ts";
+import {useGeolocation} from "../hooks/useGeolocation.ts";
+import WelcomeModal from "../components/modals/WelcomeModal.tsx";
+import MeetupSetupModal from "../components/modals/MeetupSetupModal.tsx";
+import AddressSearchModal from "../components/modals/AddressSearchModal.tsx";
+import NearbyPlacesPanel from "../components/panel/NearbyPlacesPanel.tsx";
 
-const KakaoHome: React.FC = () => {
+const Home: React.FC = () => {
     const {
         show,
         closeModal,
@@ -202,4 +202,4 @@ const KakaoHome: React.FC = () => {
     );
 
 }
-export default KakaoHome;
+export default Home;

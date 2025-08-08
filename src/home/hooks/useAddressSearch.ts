@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {kakaoApi} from '../../utils/kakao/KakaoApi.tsx';
+import {api} from '../utils/Api.tsx';
 
 export const useAddressSearch = () => {
     const [searchKeyword, setSearchKeyword] = useState<string>("");
@@ -18,7 +18,7 @@ export const useAddressSearch = () => {
         setError(null);
 
         try {
-            const response = await kakaoApi.searchPlaces(searchTerm, "KEYWORD");
+            const response = await api.searchPlaces(searchTerm, "KEYWORD");
             
             setSearchResults(response);
             console.log('검색 결과:', response);

@@ -1,4 +1,4 @@
-import { kakaoApi } from "../../utils/kakao/KakaoApi.tsx";
+import { api } from "../utils/Api.tsx";
 
 export const useGeolocation = () => {
     const getCurrentLocationAddress = async (): Promise<{
@@ -24,7 +24,7 @@ export const useGeolocation = () => {
                         }
                         
                         // 카카오 reverseGeocoding으로 주소 변환
-                        const geocodeResult = await kakaoApi.reverseGeocoding(
+                        const geocodeResult = await api.reverseGeocoding(
                             longitude.toString(), // 카카오는 x가 경도
                             latitude.toString()   // 카카오는 y가 위도
                         );

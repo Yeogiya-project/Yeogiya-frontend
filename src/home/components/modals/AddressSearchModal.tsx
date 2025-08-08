@@ -1,7 +1,7 @@
 import React, {useState} from "react";
-import {useAddressSearch} from "../../../hooks/kakao/useAddressSearch.ts";
-import {kakaoApi} from "../../../utils/kakao/KakaoApi.tsx";
-import type {KakaoBackendSearchResponse} from "../../../types/api.ts";
+import {useAddressSearch} from "../../hooks/useAddressSearch.ts";
+import {api} from "../../utils/Api.tsx";
+import type {KakaoBackendSearchResponse} from "../../types/api.ts";
 
 interface AddressSearchModalProps {
     closeModal: () => void;
@@ -54,7 +54,7 @@ const AddressSearchModal: React.FC<AddressSearchModalProps> = ({closeModal, onSe
             console.log('현재 위치:', latitude, longitude);
 
             // 2. 카카오 reverseGeocoding으로 주소 변환
-            const geocodeResult = await kakaoApi.reverseGeocoding(
+            const geocodeResult = await api.reverseGeocoding(
                 longitude.toString(), // 카카오는 x가 경도
                 latitude.toString()   // 카카오는 y가 위도
             );
