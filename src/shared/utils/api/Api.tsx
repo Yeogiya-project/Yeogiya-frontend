@@ -52,8 +52,8 @@ export const apiClient = {
         }
     },
 
-    // POST 요청
-    post: async <T = unknown>(url: string, data?: Record<string, unknown>): Promise<T> => {
+    // POST (배열/원시/객체 모두 허용)
+    post: async <T = unknown, D = unknown>(url: string, data?: D): Promise<T> => {
         try {
             const response = await api.post(url, data);
             return response.data as T;
@@ -63,8 +63,19 @@ export const apiClient = {
         }
     },
 
-    // PUT 요청
-    put: async <T = unknown>(url: string, data?: Record<string, unknown>): Promise<T> => {
+    // // POST 요청
+    // post: async <T = unknown>(url: string, data?: Record<string, unknown>): Promise<T> => {
+    //     try {
+    //         const response = await api.post(url, data);
+    //         return response.data as T;
+    //     } catch (error) {
+    //         console.error('POST 요청 실패:', error);
+    //         throw error;
+    //     }
+    // },
+
+    // PUT (배열/원시/객체 모두 허용)
+    put: async <T = unknown, D = unknown>(url: string, data?: D): Promise<T> => {
         try {
             const response = await api.put(url, data);
             return response.data as T;
@@ -73,6 +84,17 @@ export const apiClient = {
             throw error;
         }
     },
+
+    // // PUT 요청
+    // put: async <T = unknown>(url: string, data?: Record<string, unknown>): Promise<T> => {
+    //     try {
+    //         const response = await api.put(url, data);
+    //         return response.data as T;
+    //     } catch (error) {
+    //         console.error('PUT 요청 실패:', error);
+    //         throw error;
+    //     }
+    // },
 
     // DELETE 요청
     delete: async (url: string) => {
